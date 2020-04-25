@@ -1,2 +1,2 @@
-# cl-lox
-Lox in Common Lisp from https://craftinginterpreters.com/contents.html
+# clox
+Lox in Common Lisp from Crafting interpreters book: https://craftinginterpreters.com/contents.html
