@@ -1,6 +1,5 @@
-(in-package :cl-user)
 (defpackage :clox
-  (:use :cl :defclass-std))
+  (:use :cl :defclass-std :clox/parser))
 (in-package :clox)
 (import 'unix-opts)
 
