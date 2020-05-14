@@ -1,6 +1,7 @@
-(defpackage :clox/token
-  (:use :cl :defclass-std :cl-interpol :checked-class))
-(in-package :clox/token)
+(defpackage :clox.token
+  (:use :cl :defclass-std :cl-interpol :checked-class)
+  (:export :token :token-type :make-token :to-string))
+(in-package :clox.token)
 
 (named-readtables:in-readtable :interpol-syntax)
 
@@ -47,7 +48,7 @@
       :type integer))
     (:metaclass checked-class::checked-class)))
 
-(defun make-token (token-type &key lexeme literal line)
+(defun make-token (token-type lexeme literal line)
   (declare (integer line))
   (make-instance 'token :token-type token-type
                         :lexeme lexeme

@@ -1,5 +1,5 @@
 (defpackage :clox
-  (:use :cl :defclass-std :clox/parser))
+  (:use :cl :defclass-std :clox.scanner :clox.parser))
 (in-package :clox)
 (import 'unix-opts)
 
@@ -10,23 +10,7 @@
    :meta-var "script"
    :arg-parser #'identity))
 
-(defparameter *had-error* nil "Lox's error state - yup we're not using Lisp's condition system :D")
 
-(defclass/std scanner ()
-  ((content)))
-
-(defun delimiterp (c) (or (char= c #\Space) (char= c #\Newline)))
-
-(defun my-split (string &key (delimiterp #'delimiterp))
-  (loop :for beg = (position-if-not delimiterp string)
-          :then (position-if-not delimiterp string :start (1+ end))
-        :for end = (and beg (position-if delimiterp string :start beg))
-        :when beg :collect (subseq string beg end)
-          :while end))
-
-(defmethod scan-tokens ((scanner scanner))
-  (with-slots (content) scanner
-    (my-split content)))
 
 (defun run (source-code)
   (let* ((scanner (make-instance 'scanner :content source-code))
@@ -43,13 +27,7 @@
   (when *had-error* (exit 64))
   )
 
-(defun lox-error (line message)
-  (declare (integer line))
-  (report line "" message))
 
-(defun report (line where message)
-  (declare (integer line))
-  (format *error-output* "[line ~A] Error~A: ~A" line where message))
 
 (defun run-prompt ()
   (loop do
