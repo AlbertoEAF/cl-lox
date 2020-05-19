@@ -26,7 +26,7 @@
 
     EOF))
 
-(defun token-type-p (x) (member x *token-type*))
+(defun token-type-p (x) (member x *token-type* :test #'string=))
 (deftype token-type () `(satisfies token-type-p))
 
 (locally (declare (optimize safety))
