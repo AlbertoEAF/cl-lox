@@ -9,6 +9,7 @@
     :accessor source
     :type string)
    (tokens
+    :initform nil
     :accessor tokens
     :type list)
    (start
@@ -16,7 +17,7 @@
     :accessor start
     :type integer)
    (current
-    :initform 2
+    :initform 0
     :accessor current
     :type integer)
    (line
@@ -41,7 +42,7 @@
   (declare (type scanner scanner))
   (>= (current scanner) (length (source scanner))))
 
-  
+
 
 (defmethod scan-tokens ((scanner scanner))
   (with-slots (start current line tokens) scanner
