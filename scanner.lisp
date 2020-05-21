@@ -99,7 +99,7 @@
   (let ((text (subseq (source scanner)
                       (start scanner)
                       (current scanner))))
-    (add-token scanner (or (member text *keywords* :test #'string-equal)
+    (add-token scanner (or (car (member text *keywords* :test #'string-equal))
                            'IDENTIFIER))))
 
 (defun clox-number (scanner)
