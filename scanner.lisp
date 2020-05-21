@@ -53,7 +53,7 @@
     (setf tokens (reverse tokens))
     tokens))
 
-(defun* scan-token ((scanner scanner))
+(defun* scan-token ((scanner scanner) &key (preserve-nil-token-types nil))
   (let* ((c (advance scanner))
          (token-candidate
            (case c
@@ -75,10 +75,9 @@
              (#\> (if (match scanner #\=) 'GREATER_EQUAL 'GREATER))
              ;; exception: / -- can also be a comment
              (#\/
-              (if (match scanner #\/) (loop while (and (char/= #\Newline (peek scanner))
-                                                       (not (at-end-p scanner)))
-                                            do (advance scanner))
-                  'SLASH))
+              (cond ((match scanner #\/) (simple-comment-parser scanner))
+                    ((match scanner #\*) (nested-comment-parser scanner))
+                    (t 'SLASH)))
              ;; Ignore whitespace
              ((#\Space #\Return #\Tab))
              (#\Newline (incf (line scanner)))
@@ -90,8 +89,32 @@
                     ((is-alpha-p c) (identifier scanner))
                     (t (clox.error::clox-error (line scanner)
                                                "Unexpected character.")))))))
-    (when (typep token-candidate 'symbol)
+    (when (and (typep token-candidate 'symbol)
+               ;; if nil, depends on preserve-nil-token-types option:
+               (or (not (null token-candidate))
+                   preserve-nil-token-types))
       (add-token scanner token-candidate))))
+
+(defun simple-comment-parser (scanner)
+  (loop while (and (not (at-end-p scanner))
+                   (char/= #\Newline (peek scanner)))
+        do (advance scanner)))
+
+(defun nested-comment-parser (scanner)
+  (loop
+    with nesting-level = 1
+    while (and (plusp nesting-level)
+               (not (at-end-p scanner)))
+    do
+       (cond ((and (match scanner #\*)
+                   (match scanner #\/))
+              (decf nesting-level))
+             ((and (match scanner #\/)
+                   (match scanner #\*))
+              (incf nesting-level))
+             (t (advance scanner)))))
+
+
 
 (defun identifier(scanner)
   (loop while (is-alpha-numeric (peek scanner))
@@ -135,10 +158,10 @@
 (defun* match ((scanner scanner) (expected standard-char))
   (cond ((at-end-p scanner) nil)
         ((char/= expected
-                 (aref (source scanner) (current scanner)))
+                 (peek scanner))
          nil)
-        (t (incf (current scanner))
-           t)))
+        (t (incf (current scanner)))))
+
 
 (defun* peek ((scanner scanner))
   (if (at-end-p scanner) #\Nul
