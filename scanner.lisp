@@ -1,7 +1,17 @@
 (defpackage :clox.scanner
-  (:use :cl :checked-class :clox.token :defstar))
+  (:use :cl :checked-class :clox.token :defstar)
+  (:export :scanner :make-scanner :scan-tokens))
 (in-package :clox.scanner)
 
+
+(defvar *keywords* '(AND CLASS ELSE FALSE FOR FUN IF NIL OR PRINT RETURN SUPER THIS TRUE VAR WHILE))
+
+(defmacro let-curry (obj (&rest functions) &body body)
+  "Locally curry all functions"
+  `(flet ,(loop for fn in functions
+                collect `(,fn (&rest args)
+                              (apply #',fn ,obj args)))
+     ,@body))
 
 (defclass scanner ()
   ((source
@@ -29,20 +39,9 @@
 (defun make-scanner (source)
   (make-instance 'scanner :source source))
 
-;; (defun delimiterp (c) (or (char= c #\Space) (char= c #\Newline)))
-
-;; (defun my-split (string &key (delimiterp #'delimiterp))
-;;   (loop :for beg = (position-if-not delimiterp string)
-;;           :then (position-if-not delimiterp string :start (1+ end))
-;;         :for end = (and beg (position-if delimiterp string :start beg))
-;;         :when beg :collect (subseq string beg end)
-;;           :while end))
-
 (defun at-end-p (scanner)
   (declare (type scanner scanner))
   (>= (current scanner) (length (source scanner))))
-
-
 
 (defmethod scan-tokens ((scanner scanner))
   (with-slots (start current line tokens) scanner
@@ -51,6 +50,7 @@
              (setf start current)
              (scan-token scanner))
     (push (make-token 'EOF "" nil line) tokens)
+    (setf tokens (reverse tokens))
     tokens))
 
 (defun* scan-token ((scanner scanner))
@@ -86,11 +86,21 @@
              (#\" (clox-string scanner) nil)
              ;; No match: error
              (t
-              (if (is-digit-p c) (number scanner)
-                  (clox.error::clox-error (line scanner)
-                                          "Unexpected character."))))))
+              (cond ((is-digit-p c) (clox-number scanner))
+                    ((is-alpha-p c) (identifier scanner))
+                    (t (clox.error::clox-error (line scanner)
+                                               "Unexpected character.")))))))
     (when (typep token-candidate 'symbol)
       (add-token scanner token-candidate))))
+
+(defun identifier(scanner)
+  (loop while (is-alpha-numeric (peek scanner))
+        do (advance scanner))
+  (let ((text (subseq (source scanner)
+                      (start scanner)
+                      (current scanner))))
+    (add-token scanner (or (member text *keywords* :test #'string-equal)
+                           'IDENTIFIER))))
 
 (defun clox-number (scanner)
   (declare (type scanner scanner))
@@ -107,18 +117,20 @@
 
 (defun clox-string (scanner)
   "Parse string into a token and add it to tokens"
-  (loop while (and (char/= #\" (peek scanner))
-                   (not (at-end-p scanner)))
-        do
-           (if (char= #\Newline (peek scanner)) (incf (line scanner))
-               (advance scanner)))
-  (when (at-end-p scanner)
-    (clox.error::clox-error (line scanner) "Unterminated string.")
-    (return-from clox-string nil))
-  (advance scanner) ;; consume closing "
-  (add-token scanner 'STRING (subseq (source scanner)
-                                     (1+ (start scanner))
-                                     (1- (current scanner)))))
+  (let-curry scanner (peek at-end-p advance source start current)
+    (loop while (and (char/= #\" (peek))
+                     (not (at-end-p)))
+          do
+             (if (char= #\Newline (peek)) (incf (line scanner))
+                 (advance)))
+    (when (at-end-p)
+      (clox.error::clox-error (line scanner) "Unterminated string.")
+      (return-from clox-string nil))
+    (advance) ;; consume closing \"
+    (add-token scanner 'STRING (subseq (source)
+                                       (1+ (start))
+                                       (1- (current))))))
+
 
 (defun* match ((scanner scanner) (expected standard-char))
   (cond ((at-end-p scanner) nil)
@@ -139,14 +151,25 @@
         #\Nul
         (aref source (1+ current)))))
 
+(defun is-alpha-numeric (c)
+  (or (is-alpha-p c)
+      (is-digit-p c)))
+
+(defun is-alpha-p (c)
+  (or (char<= #\a c #\z)
+      (char<= #\A c #\Z)
+      (char=  #\_ c)))
+
+
 (defun is-digit-p (c)
   (char<= #\0 c #\9))
-
 
 (defun advance (scanner)
   (declare (type scanner scanner))
   (incf (current scanner))
   (aref (source scanner) (1- (current scanner))))
+
+
 
 (defun add-token (scanner token-type &optional literal)
   (declare (type scanner scanner)
@@ -158,10 +181,6 @@
                       line)
           (tokens scanner))))
 
-
-
-(defmacro args (args &body body)
-  `(loop for arg in args do (print arg)))
 
 (defun parse-number (string)
   "To do: assert return type is number"

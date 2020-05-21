@@ -1,5 +1,5 @@
 (defpackage :clox
-  (:use :cl :defclass-std :clox.scanner :clox.parser))
+  (:use :cl :defclass-std :clox.scanner))
 (in-package :clox)
 (import 'unix-opts)
 
@@ -13,7 +13,7 @@
 
 
 (defun run (source-code)
-  (let* ((scanner (make-instance 'scanner :content source-code))
+  (let* ((scanner (make-scanner source-code))
          (tokens (scan-tokens scanner)))
     (loop
       for token in tokens do (print token)
@@ -24,7 +24,7 @@
 
 (defun run-file (filepath)
   (run (uiop:read-file-line filepath))
-  (when *had-error* (exit 64))
+  (when clox.error::*had-error* (exit 64))
   )
 
 
@@ -34,7 +34,7 @@
     (format t "> ")
     (finish-output t)
     (run (read-line))
-    (setf *had-error* nil)))
+    (setf clox.error::*had-error* nil)))
 
 (defun main (args)
   (multiple-value-bind (options free-args) (opts:get-opts args)
