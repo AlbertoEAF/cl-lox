@@ -1,6 +1,7 @@
 (defpackage :lox.token
   (:use :cl :defclass-std :cl-interpol :checked-class)
-  (:export :token :token-type :make-token :to-string))
+  (:export :token :token-type :make-token :to-string
+           :lexeme))
 (in-package :lox.token)
 
 (named-readtables:in-readtable :interpol-syntax)

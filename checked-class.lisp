@@ -2,7 +2,8 @@
 ;;; https://stackoverflow.com/questions/51723992/how-to-force-slots-type-to-be-checked-during-make-instance
 
 (defpackage :checked-class
-  (:use :cl))
+  (:use :cl)
+  (:export :checked-class))
 (in-package :checked-class)
 
 (require 'closer-mop)
