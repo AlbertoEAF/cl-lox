@@ -1,3 +1,3 @@
-(defpackage :clox.parser
+(defpackage :lox.parser
   (:use :cl :defclass-std))
-(in-package :clox.parser)
+(in-package :lox.parser)

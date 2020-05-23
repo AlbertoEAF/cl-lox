@@ -1,6 +1,6 @@
-(defpackage :clox
-  (:use :cl :defclass-std :clox.scanner))
-(in-package :clox)
+(defpackage :lox
+  (:use :cl :defclass-std :lox.scanner))
+(in-package :lox)
 (import 'unix-opts)
 
 (opts:define-opts
@@ -24,7 +24,7 @@
 
 (defun run-file (filepath)
   (run (uiop:read-file-line filepath))
-  (when clox.error::*had-error* (exit 64))
+  (when lox.error::*had-error* (exit 64))
   )
 
 
@@ -34,7 +34,7 @@
     (format t "> ")
     (finish-output t)
     (run (read-line))
-    (setf clox.error::*had-error* nil)))
+    (setf lox.error::*had-error* nil)))
 
 (defun main (args)
   (multiple-value-bind (options free-args) (opts:get-opts args)
@@ -43,6 +43,6 @@
              (print "Invalid usage! Pass a script or nothing at all.")
              (exit 64))
             (script
-             (clox::run-file script))
+             (lox::run-file script))
             (t
-             (clox::run-prompt))))))
+             (lox::run-prompt))))))

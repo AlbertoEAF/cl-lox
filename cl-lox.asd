@@ -10,7 +10,7 @@
                (:file "lox-token")
                (:file "scanner")
                (:file "lox-parser")
-               (:file "cl-lox")))
+               (:file "lox")))
 
 ;; (defsystem "aoc19/tests"
 ;;   :depends-on ("aoc19" "rove")

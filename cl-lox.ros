@@ -8,12 +8,12 @@ exec ros -Q -- $0 "$@"
   #+quicklisp(ql:quickload '() :silent t)
   )
 
-(asdf:load-system 'clox)
+(asdf:load-system 'cl-lox)
 (defpackage :ros.script.clox.3796815203
-  (:use :cl :clox))
+  (:use :cl :lox))
 (in-package :ros.script.clox.3796815203)
 
-(defun main (&rest argv) (apply clox::main argv))
+(defun main (&rest argv) (apply lox::main argv))
 ;; (defun main (&rest argv)
 ;; (declare (ignorable argv)))
 ;;; vim: set ft=lisp lisp:

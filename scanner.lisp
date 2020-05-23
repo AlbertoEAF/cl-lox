@@ -1,7 +1,7 @@
-(defpackage :clox.scanner
-  (:use :cl :checked-class :clox.token :defstar)
+(defpackage :lox.scanner
+  (:use :cl :checked-class :lox.token :defstar)
   (:export :scanner :make-scanner :scan-tokens))
-(in-package :clox.scanner)
+(in-package :lox.scanner)
 
 
 (defvar *keywords* '(AND CLASS ELSE FALSE FOR FUN IF NIL OR PRINT RETURN SUPER THIS TRUE VAR WHILE))
@@ -82,12 +82,12 @@
              ((#\Space #\Return #\Tab))
              (#\Newline (incf (line scanner)))
              ;; strings
-             (#\" (clox-string scanner) nil)
+             (#\" (lox-string scanner) nil)
              ;; No match: error
              (t
-              (cond ((is-digit-p c) (clox-number scanner))
+              (cond ((is-digit-p c) (lox-number scanner))
                     ((is-alpha-p c) (identifier scanner))
-                    (t (clox.error::clox-error (line scanner)
+                    (t (lox.error::lox-error (line scanner)
                                                "Unexpected character.")))))))
     (when (and (typep token-candidate 'symbol)
                ;; if nil, depends on preserve-nil-token-types option:
@@ -125,7 +125,7 @@
     (add-token scanner (or (car (member text *keywords* :test #'string-equal))
                            'IDENTIFIER))))
 
-(defun clox-number (scanner)
+(defun lox-number (scanner)
   (declare (type scanner scanner))
   (loop while (is-digit-p (peek scanner))
         do (advance scanner))
@@ -138,7 +138,7 @@
                                                    (start scanner)
                                                    (current scanner)))))
 
-(defun clox-string (scanner)
+(defun lox-string (scanner)
   "Parse string into a token and add it to tokens"
   (let-curry scanner (peek at-end-p advance source start current)
     (loop while (and (char/= #\" (peek))
@@ -147,8 +147,8 @@
              (if (char= #\Newline (peek)) (incf (line scanner))
                  (advance)))
     (when (at-end-p)
-      (clox.error::clox-error (line scanner) "Unterminated string.")
-      (return-from clox-string nil))
+      (lox.error::lox-error (line scanner) "Unterminated string.")
+      (return-from lox-string nil))
     (advance) ;; consume closing \"
     (add-token scanner 'STRING (subseq (source)
                                        (1+ (start))
