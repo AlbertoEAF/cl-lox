@@ -1,16 +1,16 @@
-(defsystem "clox"
+(defsystem "cl-lox"
   :depends-on ("cl-interpol" "cl-graph" "trivial-arguments"
                              "queues" "log4cl" "array-operations"
                              "alexandria" "defclass-std" "iterate"
                              "unix-opts" "defenum" "closer-mop"
                              "defstar")
   :serial t
-  :components ((:file "clox-error")
+  :components ((:file "lox-error")
                (:file "checked-class")
-               (:file "clox-token")
+               (:file "lox-token")
                (:file "scanner")
-               (:file "clox-parser")
-               (:file "clox")))
+               (:file "lox-parser")
+               (:file "cl-lox")))
 
 ;; (defsystem "aoc19/tests"
 ;;   :depends-on ("aoc19" "rove")

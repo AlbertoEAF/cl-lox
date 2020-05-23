@@ -1,11 +1,11 @@
-(defpackage :clox.error
+(defpackage :lox.error
   (:use :cl)
   (:export :*had-error* :lox-error :report))
-(in-package :clox.error)
+(in-package :lox.error)
 
 (defparameter *had-error* nil "Lox's error state - yup we're not using Lisp's condition system :D")
 
-(defun clox-error (line message)
+(defun lox-error (line message)
   (declare (integer line))
   (report line "" message))
 
