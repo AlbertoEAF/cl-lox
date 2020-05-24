@@ -5,10 +5,11 @@
 (in-package :lox.syntax)
 (proclaim '(optimize safety))
 
-(defun with=slot-initarg (slot)
-  "Add :initarg :x for slot with name x if :initarg was not set already"
-  (if (getf (cdr slot) :initarg) slot
-      (append slot (list :initarg (intern (string-upcase (car slot)) "KEYWORD")))))
+(eval-when (:compile-toplevel)
+  (defun with=slot-initarg (slot)
+    "Add :initarg :x for slot with name x if :initarg was not set already"
+    (if (getf (cdr slot) :initarg) slot
+        (append slot (list :initarg (intern (string-upcase (car slot)) "KEYWORD"))))))
 
 (defmacro defclass+ (name superclasses slots)
   "Defines type-checked class. slots get a default :initarg of the same name as the slot."
