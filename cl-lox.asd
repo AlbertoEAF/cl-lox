@@ -5,10 +5,15 @@
                              "unix-opts" "defenum" "closer-mop"
                              "defstar")
   :serial t
-  :components ((:file "lox-error")
+  :components (;; Utils (can be moved to external libraries)
                (:file "checked-class")
+               (:file "defclass-plus")
+               ;; Lox code
+               (:file "lox-error")
                (:file "lox-token")
                (:file "scanner")
+               (:file "syntax/syntax")
+               (:file "syntax/pprint")
                (:file "lox-parser")
                (:file "lox")))
 
