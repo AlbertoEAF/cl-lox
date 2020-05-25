@@ -1,7 +1,12 @@
 (defpackage :lox.syntax
   (:use :cl :lox.token :defclass-std :defclass+)
-  (:export :expr :binary :grouping :literal :unary
-           :left :right :operator :expression :value))
+  (:export
+   ;; Syntax types
+   :expr :binary :grouping :literal :unary
+   ;; Constructors
+   :make-binary :make-literal
+   ;; Accessors
+   :left :right :operator :expression :value))
 (in-package :lox.syntax)
 (proclaim '(optimize safety))
 
@@ -38,3 +43,8 @@
   ((operator :type token)
    (right :type expr)))
 
+(defun make-binary (left operator right)
+  (make-instance 'binary :left left :operator operator :right right))
+
+(defun make-literal (value)
+  (make-instance 'literal :value value))

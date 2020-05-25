@@ -1,5 +1,6 @@
 (defpackage :lox.scanner
-  (:use :cl :checked-class :lox.token :defstar)
+  (:use :cl :defstar :checked-class :defstar
+        :lox.token) ;; *TODO* use local nickname!
   (:export :scanner :make-scanner :scan-tokens))
 (in-package :lox.scanner)
 
@@ -13,28 +14,29 @@
                               (apply #',fn ,obj args)))
      ,@body))
 
-(defclass scanner ()
-  ((source
-    :initarg :source
-    :accessor source
-    :type string)
-   (tokens
-    :initform nil
-    :accessor tokens
-    :type list)
-   (start
-    :initform 0
-    :accessor start
-    :type integer)
-   (current
-    :initform 0
-    :accessor current
-    :type integer)
-   (line
-    :initform 1
-    :accessor line
-    :type integer))
-  (:metaclass checked-class::checked-class))
+(locally (declare (optimize safety))
+  (defclass scanner ()
+    ((source
+      :initarg :source
+      :accessor source
+      :type string)
+     (tokens
+      :initform nil
+      :accessor tokens
+      :type list)
+     (start
+      :initform 0
+      :accessor start
+      :type integer)
+     (current
+      :initform 0
+      :accessor current
+      :type integer)
+     (line
+      :initform 1
+      :accessor line
+      :type integer))
+    (:metaclass checked-class)))
 
 (defun make-scanner (source)
   (make-instance 'scanner :source source))

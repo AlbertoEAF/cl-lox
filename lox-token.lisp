@@ -1,7 +1,13 @@
 (defpackage :lox.token
-  (:use :cl :defclass-std :cl-interpol :checked-class)
-  (:export :token :token-type :make-token :to-string
-           :lexeme))
+  (:use :cl :cl-interpol :defclass+)
+  (:export
+   ;; class and high-level methods
+   :token :token-type :make-token
+   ;; token slot readers
+   :get-lexeme :get-token-type :get-literal :get-line
+   ;; utils
+   :to-string :lexeme :token-type=))
+
 (in-package :lox.token)
 
 (named-readtables:in-readtable :interpol-syntax)
@@ -27,27 +33,24 @@
 
     EOF))
 
+(defun token-type= (a b)
+  (string= a b))
+
 (defun token-type-p (x) (member x *token-type* :test #'string=))
 (deftype token-type () `(satisfies token-type-p))
 
-(locally (declare (optimize safety))
-  (defclass token ()
-    ((token-type
-      :initarg :token-type
-      :reader token-type
-      :type token-type)
-     (lexeme
-      :initarg :lexeme
-      :reader lexeme
-      :type string)
-     (literal
-      :initarg :literal
-      :reader literal)
-     (line
-      :initarg :line
-      :reader line
-      :type integer))
-    (:metaclass checked-class::checked-class)))
+(defclass+ token ()
+  ((token-type
+    :reader get-token-type
+    :type token-type)
+   (lexeme
+    :reader get-lexeme
+    :type string)
+   (literal
+    :reader get-literal)
+   (line
+    :reader get-line
+    :type integer)))
 
 (defun make-token (token-type lexeme literal line)
   (declare (integer line))
