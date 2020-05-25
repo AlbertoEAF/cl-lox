@@ -1,5 +1,6 @@
 (defpackage :lox.parser
   (:use :cl :defclass+ :defstar)
+  (:export :make-parser :parse)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)))
 (in-package :lox.parser)
@@ -136,7 +137,7 @@
 
 (defun* multiplication ((parser parser))
   (let ((expr (unary parser)))
-    (loop while (match parser 'MINUS 'PLUS)
+    (loop while (match parser 'STAR 'SLASH)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)

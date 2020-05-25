@@ -1,5 +1,6 @@
 (defpackage :lox
-  (:use :cl :defclass-std :lox.scanner))
+  (:use :cl :defclass-std :lox.scanner :lox.parser :lox.pprint)
+  (:export :run))
 (in-package :lox)
 (import 'unix-opts)
 
@@ -14,10 +15,11 @@
 
 (defun run (source-code)
   (let* ((scanner (make-scanner source-code))
-         (tokens (scan-tokens scanner)))
-    (loop
-      for token in tokens do (print token)
-      finally (princ #\Newline))))
+         (tokens (scan-tokens scanner))
+         (parser (make-parser tokens))
+         (expression (parse parser)))
+    (if (null lox.error::*had-error*)
+        (princ (lox.pprint:ast-pprint expression)))))
 
 (defun exit (&optional (code 64))
   (sb-ext:exit :code code))

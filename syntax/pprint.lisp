@@ -1,7 +1,8 @@
-(defpackage :lox-pprint
-  (:use :cl :lox.token)
+(defpackage :lox.pprint
+  (:use :cl :lox.token :lox.syntax)
+  (:export :ast-pprint)
   (:local-nicknames (#:syntax #:lox.syntax)))
-(in-package :lox-pprint)
+(in-package :lox.pprint)
 
 (defmethod ast-pprint ((expr syntax:expr))
   (format nil "~A" expr))
