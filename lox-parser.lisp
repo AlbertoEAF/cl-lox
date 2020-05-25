@@ -6,13 +6,6 @@
 
 ;;; Parser base code
 
-(defmacro let-curry (obj (&rest functions) &body body)
-  "Locally curry all functions"
-  `(flet ,(loop for fn in functions
-                collect `(,fn (&rest args)
-                              (apply #',fn ,obj args)))
-     ,@body))
-
 (defclass+ parser ()
   ((tokens  :type list    :initform nil)
    (current :type integer :initform 0)))
@@ -104,7 +97,6 @@
 (defun* parse-left-associative-binary ((parser parser)
                                        parse-fn
                                        (match-operator-tokens list))
-
   "Parses a binary expression of the form:
     <parse-fn parser> (<operator in match-operator-tokens> <parse-fn parser>)*"
   (let ((expr (funcall parse-fn parser)))

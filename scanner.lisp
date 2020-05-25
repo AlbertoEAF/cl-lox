@@ -1,18 +1,11 @@
 (defpackage :lox.scanner
-  (:use :cl :defstar :checked-class :defstar
+  (:use :cl :defstar :checked-class :defstar :cl-extensions
         :lox.token) ;; *TODO* use local nickname!
   (:export :scanner :make-scanner :scan-tokens))
 (in-package :lox.scanner)
 
 
 (defvar *keywords* '(AND CLASS ELSE FALSE FOR FUN IF NIL OR PRINT RETURN SUPER THIS TRUE VAR WHILE))
-
-(defmacro let-curry (obj (&rest functions) &body body)
-  "Locally curry all functions"
-  `(flet ,(loop for fn in functions
-                collect `(,fn (&rest args)
-                              (apply #',fn ,obj args)))
-     ,@body))
 
 (locally (declare (optimize safety))
   (defclass scanner ()
@@ -41,12 +34,16 @@
 (defun make-scanner (source)
   (make-instance 'scanner :source source))
 
-(defun at-end-p (scanner)
-  (declare (type scanner scanner))
-  (>= (current scanner) (length (source scanner))))
+(defmacro with-scanner-slots (scanner &body body)
+  `(with-slots (source tokens start current line) ,scanner
+     ,@body))
+
+(defun* at-end-p ((scanner scanner))
+  (with-scanner-slots scanner
+    (>= current (length source))))
 
 (defmethod scan-tokens ((scanner scanner))
-  (with-slots (start current line tokens) scanner
+  (with-scanner-slots scanner
     (loop while (not (at-end-p scanner))
           do
              (setf start current)
@@ -56,69 +53,69 @@
     tokens))
 
 (defun* scan-token ((scanner scanner) &key (preserve-nil-token-types nil))
-  (let* ((c (advance scanner))
-         (token-candidate
-           (case c
-             ;; 1-character cases
-             (#\( 'LEFT_PAREN)
-             (#\) 'RIGHT_PAREN)
-             (#\{ 'LEFT_BRACE)
-             (#\} 'RIGHT_BRACE)
-             (#\, 'COMMA)
-             (#\. 'DOT)
-             (#\- 'MINUS)
-             (#\+ 'PLUS)
-             (#\; 'SEMICOLON)
-             (#\* 'STAR)
-             ;; 2-character cases
-             (#\! (if (match scanner #\=) 'BANG_EQUAL 'BANG))
-             (#\= (if (match scanner #\=) 'EQUAL_EQUAL 'EQUAL))
-             (#\< (if (match scanner #\=) 'LESS_EQUAL 'LESS))
-             (#\> (if (match scanner #\=) 'GREATER_EQUAL 'GREATER))
-             ;; exception: / -- can also be a comment
-             (#\/
-              (cond ((match scanner #\/) (simple-comment-parser scanner))
-                    ((match scanner #\*) (nested-comment-parser scanner))
-                    (t 'SLASH)))
-             ;; Ignore whitespace
-             ((#\Space #\Return #\Tab))
-             (#\Newline (incf (line scanner)))
-             ;; strings
-             (#\" (lox-string scanner) nil)
-             ;; No match: error
-             (t
-              (cond ((is-digit-p c) (lox-number scanner))
-                    ((is-alpha-p c) (identifier scanner))
-                    (t (lox.error::lox-error (line scanner)
+  (with-curry (match advance) scanner
+    (let* ((c (advance))
+           (token-candidate
+             (case c
+               ;; 1-character cases
+               (#\( 'LEFT_PAREN)
+               (#\) 'RIGHT_PAREN)
+               (#\{ 'LEFT_BRACE)
+               (#\} 'RIGHT_BRACE)
+               (#\, 'COMMA)
+               (#\. 'DOT)
+               (#\- 'MINUS)
+               (#\+ 'PLUS)
+               (#\; 'SEMICOLON)
+               (#\* 'STAR)
+               ;; 2-character cases
+               (#\! (if (match #\=) 'BANG_EQUAL 'BANG))
+               (#\= (if (match #\=) 'EQUAL_EQUAL 'EQUAL))
+               (#\< (if (match #\=) 'LESS_EQUAL 'LESS))
+               (#\> (if (match #\=) 'GREATER_EQUAL 'GREATER))
+               ;; exception: / -- can also be a comment
+               (#\/
+                (cond ((match #\/) (simple-comment-parser scanner))
+                      ((match #\*) (nested-comment-parser scanner))
+                      (t 'SLASH)))
+               ;; Ignore whitespace
+               ((#\Space #\Return #\Tab))
+               (#\Newline (incf (line scanner)))
+               ;; strings
+               (#\" (lox-string scanner) nil)
+               ;; No match: error
+               (t
+                (cond ((is-digit-p c) (lox-number scanner))
+                      ((is-alpha-p c) (identifier scanner))
+                      (t (lox.error::lox-error (line scanner)
                                                "Unexpected character.")))))))
-    (when (and (typep token-candidate 'symbol)
-               ;; if nil, depends on preserve-nil-token-types option:
-               (or (not (null token-candidate))
-                   preserve-nil-token-types))
-      (add-token scanner token-candidate))))
+      (when (and (typep token-candidate 'symbol)
+                 ;; if nil, depends on preserve-nil-token-types option:
+                 (or (not (null token-candidate))
+                     preserve-nil-token-types))
+        (add-token scanner token-candidate)))))
 
 (defun simple-comment-parser (scanner)
   (loop while (and (not (at-end-p scanner))
                    (char/= #\Newline (peek scanner)))
         do (advance scanner)))
 
-(defun nested-comment-parser (scanner)
-  (loop
-    with nesting-level = 1
-    while (and (plusp nesting-level)
-               (not (at-end-p scanner)))
-    do
-       (cond ((and (match scanner #\*)
-                   (match scanner #\/))
-              (decf nesting-level))
-             ((and (match scanner #\/)
-                   (match scanner #\*))
-              (incf nesting-level))
-             (t (advance scanner)))))
+(defun* nested-comment-parser ((scanner scanner))
+  (with-curry (match at-end-p advance) scanner
+    (loop
+      with nesting-level = 1
+      while (and (plusp nesting-level)
+                 (not (at-end-p)))
+      do
+         (cond ((and (match #\*)
+                     (match #\/))
+                (decf nesting-level))
+               ((and (match #\/)
+                     (match #\*))
+                (incf nesting-level))
+               (t (advance))))))
 
-
-
-(defun identifier(scanner)
+(defun* identifier ((scanner scanner))
   (loop while (is-alpha-numeric (peek scanner))
         do (advance scanner))
   (let ((text (subseq (source scanner)
@@ -127,34 +124,36 @@
     (add-token scanner (or (car (member text *keywords* :test #'string-equal))
                            'IDENTIFIER))))
 
-(defun lox-number (scanner)
-  (declare (type scanner scanner))
-  (loop while (is-digit-p (peek scanner))
-        do (advance scanner))
-  (when (and (char= #\. (peek scanner))
-             (is-digit-p (peek-next scanner)))
-    (advance scanner)
-    (loop while (is-digit-p (peek scanner))
-          do (advance scanner)))
-  (add-token scanner 'NUMBER (parse-number (subseq (source scanner)
-                                                   (start scanner)
-                                                   (current scanner)))))
+(defun* lox-number ((scanner scanner))
+  (with-scanner-slots scanner
+    (with-curry (peek peek-next advance) scanner
+      (loop while (is-digit-p (peek))
+            do (advance))
+      (when (and (char= #\. (peek))
+                 (is-digit-p (peek-next)))
+        (advance)
+        (loop while (is-digit-p (peek))
+              do (advance)))
+      (add-token scanner 'NUMBER (parse-number (subseq source
+                                                       start
+                                                       current))))))
 
-(defun lox-string (scanner)
+(defun* lox-string ((scanner scanner))
   "Parse string into a token and add it to tokens"
-  (let-curry scanner (peek at-end-p advance source start current)
-    (loop while (and (char/= #\" (peek))
-                     (not (at-end-p)))
-          do
-             (if (char= #\Newline (peek)) (incf (line scanner))
-                 (advance)))
-    (when (at-end-p)
-      (lox.error::lox-error (line scanner) "Unterminated string.")
-      (return-from lox-string nil))
-    (advance) ;; consume closing \"
-    (add-token scanner 'STRING (subseq (source)
-                                       (1+ (start))
-                                       (1- (current))))))
+  (with-scanner-slots scanner
+    (with-curry (peek at-end-p advance) scanner
+      (loop while (and (char/= #\" (peek))
+                       (not (at-end-p)))
+            do
+               (if (char= #\Newline (peek)) (incf line)
+                   (advance)))
+      (when (at-end-p)
+        (lox.error::lox-error line "Unterminated string.")
+        (return-from lox-string nil))
+      (advance) ;; consume closing \"
+      (add-token scanner 'STRING (subseq source
+                                         (1+ start)
+                                         (1- current))))))
 
 
 (defun* match ((scanner scanner) (expected standard-char))
@@ -169,7 +168,7 @@
   (if (at-end-p scanner) #\Nul
       (aref (source scanner) (current scanner))))
 
-(defun peek-next (scanner)
+(defun* peek-next ((scanner scanner))
   (with-slots (current source) scanner
     (if (>= (1+ current)
             (length source))
@@ -189,22 +188,20 @@
 (defun is-digit-p (c)
   (char<= #\0 c #\9))
 
-(defun advance (scanner)
-  (declare (type scanner scanner))
-  (incf (current scanner))
-  (aref (source scanner) (1- (current scanner))))
+(defun* advance ((scanner scanner))
+  (with-scanner-slots scanner
+    (incf current)
+    (aref source (1- current))))
 
 
 
-(defun add-token (scanner token-type &optional literal)
-  (declare (type scanner scanner)
-           (type token-type token-type))
-  (with-slots (start current line source) scanner
+(defun* add-token ((scanner scanner) (token-type token-type) &optional literal)
+  (with-scanner-slots scanner
     (push (make-token token-type
                       (subseq source start current)
                       literal
                       line)
-          (tokens scanner))))
+          tokens)))
 
 
 (defun parse-number (string)

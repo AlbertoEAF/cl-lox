@@ -4,7 +4,7 @@
    ;; Syntax types
    :expr :binary :grouping :literal :unary
    ;; Constructors
-   :make-binary :make-literal
+   :make-binary :make-literal :make-grouping :make-unary
    ;; Accessors
    :left :right :operator :expression :value))
 (in-package :lox.syntax)
@@ -48,3 +48,9 @@
 
 (defun make-literal (value)
   (make-instance 'literal :value value))
+
+(defun make-grouping (expression)
+  (make-instance 'grouping :expression expression))
+
+(defun make-unary (operator right)
+  (make-instance 'unary :operator operator :right right))

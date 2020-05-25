@@ -6,8 +6,9 @@
                              "defstar")
   :serial t
   :components (;; Utils (can be moved to external libraries)
-               (:file "checked-class")
-               (:file "defclass-plus")
+               (:file "helpers/checked-class")
+               (:file "helpers/defclass-plus")
+               (:file "helpers/cl-extensions")
                ;; Lox code
                (:file "lox-error")
                (:file "lox-token")
