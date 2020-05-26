@@ -205,6 +205,8 @@
 
 
 (defun parse-number (string)
-  "To do: assert return type is number"
-  (with-input-from-string (input string)
-    (read input)))
+  (let ((input-value (with-input-from-string (input string)
+                       (read input))))
+    (assert (typep input-value 'number)
+            (input-value) "Invalid input (~A): Number was required." input-value)
+    input-value))
