@@ -171,3 +171,10 @@
     (lox-parse-error (e)
       (with-slots (token message) e
         (format t "ERROR ~A ~% tok=~A~% msg=~A)~%" e token message)))))
+
+(defun parse-from-source (source)
+  "Helper method just to try things out"
+  (lox.parser:parse
+   (lox.parser:make-parser
+    (lox.scanner:scan-tokens
+     (lox.scanner:make-scanner source)))))
