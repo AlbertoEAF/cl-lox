@@ -28,20 +28,13 @@
         ((lox-null a) nil)
         (t (equal a b))))
 
-(define-condition lox-runtime-error (error)
-  ((token :initarg :token
-          :accessor token)
-   (message :initarg :message
-            :accessor message))
-  (:documentation "Lox Runtime Error."))
-
 (defun* check-number-operand ((operator token:token) operand)
   (when (not (typep operand 'number))
-    (error 'lox-runtime-error :token operator :message "Operand must be a number.")))
+    (error 'lox.error:lox-runtime-error :token operator :message "Operand must be a number.")))
 
 (defun* check-number-operands ((operator token:token) left right)
   (when (not (type? 'number left right))
-    (error 'lox-runtime-error :token operator :message "Operands must be numbers.")))
+    (error 'lox.error:lox-runtime-error :token operator :message "Operands must be numbers.")))
 
 
 (defmethod evaluate ((expr syntax:expr))
@@ -85,8 +78,31 @@
                  ((type? 'number left right)
                   (+ left right))
                  (t
-                  (error 'lox-runtime-error :token operator
+                  (error 'lox.error:lox-runtime-error :token operator
                                             :message "Operators must be two numbers or two strings."))))
           (BANG_EQUAL (not (is-equal left right)))
           (EQUAL_EQUAL (is-equal left right))
           (t nil)))))
+
+(defun stringify (obj)
+  (flet ((lox-number-string-repr (num)
+           (let* ((num-str (format nil "~A" num)))
+             (cond ((str:ends-with? ".0" num-str)
+                    (subseq num-str 0
+                            (- (length num-str) 2)))
+                   ((str:ends-with? ".0d0" num-str)
+                    (subseq num-str 0
+                            (- (length num-str) 4)))
+                   (t num-str)))))
+    (cond ((or (null obj)
+               (eql obj :null))
+           "nil")
+          ((typep obj 'number) (lox-number-string-repr obj))
+          (t (format nil "~A" obj)))))
+
+
+(defun* interpret ((expression syntax:expr))
+  (handler-case
+      (format t "~A" (stringify (evaluate expression)))
+    (lox.error:lox-runtime-error (e)     ;; condition
+      (lox.error:lox-runtime-error e)))) ;; function
