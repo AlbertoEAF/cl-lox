@@ -56,35 +56,6 @@
           ((eql 'tok-type:BANG operator-token-type)
            (not-truthy-p right)))))
 
-(defmethod evaluate ((expr syntax:binary))
-  (let* ((left (evaluate (slot-value expr 'syntax:left)))
-         (right (evaluate (slot-value expr 'syntax:right)))
-         (operator (slot-value expr 'syntax:operator))
-         (operator-token-type (token:get-token-type operator))
-         (simple-op (case operator-token-type
-                      (tok-type::SLASH '/)
-                      (tok-type::STAR '*)
-                      (tok-type::MINUS '-)
-                      (tok-type::GREATER '>)
-                      (tok-type::GREATER_EQUAL '>=)
-                      (tok-type::LESS '<)
-                      (tok-type::LESS_EQUAL '<=))))
-    (if simple-op (progn (check-number-operands operator left right)
-                         (funcall simple-op left right))
-        (case operator-token-type
-          (tok-type:PLUS
-           (cond ((type? 'string left right)
-                  (format nil "~A~A" left right))
-                 ((type? 'number left right)
-                  (+ left right))
-                 (t
-                  (error 'lox.error:lox-runtime-error
-                         :token operator
-                         :message "Operators must be two numbers or two strings."))))
-          (tok-type::BANG_EQUAL (not (is-equal left right)))
-          (tok-type::EQUAL_EQUAL (is-equal left right))
-          (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
-
 (defun stringify (obj)
   (flet ((lox-number-string-repr (num)
            (let* ((num-str (format nil "~A" num)))
@@ -97,9 +68,46 @@
                    (t num-str)))))
     (cond ((or (null obj)
                (eql obj :null))
-           "lox-nil")
+           "Nil")
           ((typep obj 'number) (lox-number-string-repr obj))
-          (t (format nil "~A" obj)))))
+          (t (format nil "~S" obj)))))
+
+(defmethod evaluate ((expr syntax:binary))
+  (let* ((left (evaluate (slot-value expr 'syntax:left)))
+         (right (evaluate (slot-value expr 'syntax:right)))
+         (operator (slot-value expr 'syntax:operator))
+         (operator-token-type (token:get-token-type operator))
+         (simple-op (case operator-token-type
+                      (tok-type:STAR '*)
+                      (tok-type:MINUS '-)
+                      (tok-type:GREATER '>)
+                      (tok-type:GREATER_EQUAL '>=)
+                      (tok-type:LESS '<)
+                      (tok-type:LESS_EQUAL '<=))))
+    (if simple-op (progn (check-number-operands operator left right)
+                         (funcall simple-op left right))
+        (case operator-token-type
+          (tok-type:SLASH
+           (if (zerop right) (error 'lox.error:lox-runtime-error
+                                    :token operator
+                                    :message "Division by 0.")
+               (/ left right)))
+          (tok-type:PLUS
+           (cond ((type? 'number left right)
+                  (+ left right))
+                 ((type? 'string left right)
+                  (format nil "~A~A" left right))
+                 ((typep left 'string)
+                  (format nil "~A~A" left (stringify right)))
+                 ((typep right 'string)
+                  (format nil "~A~A" (stringify left) right))
+                 (t
+                  (error 'lox.error:lox-runtime-error
+                         :token operator
+                         :message "Operators must be two numbers or two strings."))))
+          (tok-type::BANG_EQUAL (not (is-equal left right)))
+          (tok-type::EQUAL_EQUAL (is-equal left right))
+          (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
 
 
 (defun* interpret ((expression syntax:expr))

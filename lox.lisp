@@ -1,6 +1,6 @@
 (defpackage :lox
   (:use :cl :defclass-std :lox.scanner :lox.parser :lox.pprint)
-  (:export :run))
+  (:export :run :run-prompt :main))
 (in-package :lox)
 (import 'unix-opts)
 
