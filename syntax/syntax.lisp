@@ -54,3 +54,15 @@
 
 (defun make-unary (operator right)
   (make-instance 'unary :operator operator :right right))
+
+(defun get-slot-names (clos-obj)
+  (mapcar #'sb-mop:slot-definition-name
+          (sb-mop:class-direct-slots
+           (class-of clos-obj))))
+
+(defmethod print-object ((expr expr) out)
+  (print-unreadable-object (expr out :type t :identity t)
+    (loop
+      for slot-name in (get-slot-names expr)
+      for slot-value = (slot-value expr slot-name)
+      do (format out " ~A=~A" slot-name slot-value))))

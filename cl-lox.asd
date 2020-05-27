@@ -10,6 +10,7 @@
                (:file "helpers/defclass-plus")
                (:file "helpers/cl-extensions")
                ;; Lox code
+               (:file "lox-token-types")
                (:file "lox-token")
                (:file "lox-error")
                (:file "scanner")

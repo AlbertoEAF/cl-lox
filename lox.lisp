@@ -18,16 +18,16 @@
          (tokens (scan-tokens scanner))
          (parser (make-parser tokens))
          (expression (parse parser)))
-    (if (null lox.error::*had-error*)
-        (princ (lox.pprint:ast-pprint expression)))))
+    (when (null lox.error::*had-error*)
+      (princ (lox.interpreter:interpret expression)))))
 
-(defun exit (&optional (code 64))
+(defun exit (&optional (code 65))
   (sb-ext:exit :code code))
 
 (defun run-file (filepath)
   (run (uiop:read-file-line filepath))
-  (when lox.error::*had-error* (exit 64))
-  )
+  (when lox.error::*had-error* (exit 65))
+  (when lox.error::*had-runtime-error* (exit 70)))
 
 
 
@@ -36,14 +36,16 @@
     (format t "> ")
     (finish-output t)
     (run (read-line))
-    (setf lox.error::*had-error* nil)))
+    (format t "~%")
+    (setf lox.error::*had-error*         nil
+          lox.error::*had-runtime-error* nil)))
 
 (defun main (args)
   (multiple-value-bind (options free-args) (opts:get-opts args)
     (let ((script (getf options :script)))
       (cond (free-args
              (print "Invalid usage! Pass a script or nothing at all.")
-             (exit 64))
+             (exit 65))
             (script
              (lox::run-file script))
             (t

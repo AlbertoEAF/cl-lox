@@ -1,11 +1,13 @@
 (defpackage :lox.scanner
   (:use :cl :defstar :checked-class :defstar :cl-extensions
         :lox.token) ;; *TODO* use local nickname!
-  (:export :scanner :make-scanner :scan-tokens))
+  (:export :scanner :make-scanner :scan-tokens)
+  (:local-nicknames (#:token #:lox.token)
+                    (#:tok-type #:lox.token.types)))
 (in-package :lox.scanner)
 
 
-(defvar *keywords* '(AND CLASS ELSE FALSE FOR FUN IF NIL OR PRINT RETURN SUPER THIS TRUE VAR WHILE))
+(defvar *keywords* '(tok-type:AND tok-type:CLASS tok-type:ELSE tok-type:FALSE tok-type:FOR tok-type:FUN tok-type:IF tok-type:NIL tok-type:OR tok-type:PRINT tok-type:RETURN tok-type:SUPER tok-type:THIS tok-type:TRUE tok-type:VAR tok-type:WHILE))
 
 (locally (declare (optimize safety))
   (defclass scanner ()
@@ -48,7 +50,7 @@
           do
              (setf start current)
              (scan-token scanner))
-    (push (make-token 'EOF "" nil line) tokens)
+    (push (make-token 'tok-type:EOF "" nil line) tokens)
     (setf tokens (reverse tokens))
     tokens))
 
@@ -58,26 +60,26 @@
            (token-candidate
              (case c
                ;; 1-character cases
-               (#\( 'LEFT_PAREN)
-               (#\) 'RIGHT_PAREN)
-               (#\{ 'LEFT_BRACE)
-               (#\} 'RIGHT_BRACE)
-               (#\, 'COMMA)
-               (#\. 'DOT)
-               (#\- 'MINUS)
-               (#\+ 'PLUS)
-               (#\; 'SEMICOLON)
-               (#\* 'STAR)
+               (#\( 'tok-type:LEFT_PAREN)
+               (#\) 'tok-type:RIGHT_PAREN)
+               (#\{ 'tok-type:LEFT_BRACE)
+               (#\} 'tok-type:RIGHT_BRACE)
+               (#\, 'tok-type:COMMA)
+               (#\. 'tok-type:DOT)
+               (#\- 'tok-type:MINUS)
+               (#\+ 'tok-type:PLUS)
+               (#\; 'tok-type:SEMICOLON)
+               (#\* 'tok-type:STAR)
                ;; 2-character cases
-               (#\! (if (match #\=) 'BANG_EQUAL 'BANG))
-               (#\= (if (match #\=) 'EQUAL_EQUAL 'EQUAL))
-               (#\< (if (match #\=) 'LESS_EQUAL 'LESS))
-               (#\> (if (match #\=) 'GREATER_EQUAL 'GREATER))
+               (#\! (if (match #\=) 'tok-type:BANG_EQUAL 'tok-type:BANG))
+               (#\= (if (match #\=) 'tok-type:EQUAL_EQUAL 'tok-type:EQUAL))
+               (#\< (if (match #\=) 'tok-type:LESS_EQUAL 'tok-type:LESS))
+               (#\> (if (match #\=) 'tok-type:GREATER_EQUAL 'tok-type:GREATER))
                ;; exception: / -- can also be a comment
                (#\/
                 (cond ((match #\/) (simple-comment-parser scanner))
                       ((match #\*) (nested-comment-parser scanner))
-                      (t 'SLASH)))
+                      (t 'tok-type:SLASH)))
                ;; Ignore whitespace
                ((#\Space #\Return #\Tab))
                (#\Newline (incf (line scanner)))
@@ -122,11 +124,11 @@
                       (start scanner)
                       (current scanner))))
     (add-token scanner (or (car (member text *keywords* :test #'string-equal))
-                           'IDENTIFIER))))
+                           'tok-type:IDENTIFIER))))
 
 (defun* lox-number ((scanner scanner))
   (with-scanner-slots scanner
-    (with-curry (peek peek-next advance) scanner
+    (with-curry (peek peek-next advance add-token) scanner
       (loop while (is-digit-p (peek))
             do (advance))
       (when (and (char= #\. (peek))
@@ -134,14 +136,15 @@
         (advance)
         (loop while (is-digit-p (peek))
               do (advance)))
-      (add-token scanner 'NUMBER (parse-number (subseq source
-                                                       start
-                                                       current))))))
+      (add-token 'tok-type:NUMBER
+                 (parse-number (subseq source
+                                       start
+                                       current))))))
 
 (defun* lox-string ((scanner scanner))
   "Parse string into a token and add it to tokens"
   (with-scanner-slots scanner
-    (with-curry (peek at-end-p advance) scanner
+    (with-curry (peek at-end-p advance add-token) scanner
       (loop while (and (char/= #\" (peek))
                        (not (at-end-p)))
             do
@@ -151,9 +154,9 @@
         (lox.error::lox-error line "Unterminated string.")
         (return-from lox-string nil))
       (advance) ;; consume closing \"
-      (add-token scanner 'STRING (subseq source
-                                         (1+ start)
-                                         (1- current))))))
+      (add-token 'tok-type:STRING (subseq source
+                                          (1+ start)
+                                          (1- current))))))
 
 
 (defun* match ((scanner scanner) (expected standard-char))

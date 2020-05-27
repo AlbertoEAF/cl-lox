@@ -2,7 +2,8 @@
   (:use :cl :defclass+ :defstar)
   (:export :make-parser :parse)
   (:local-nicknames (#:syntax #:lox.syntax)
-                    (#:token  #:lox.token)))
+                    (#:token  #:lox.token)
+                    (#:tok-type #:lox.token.types)))
 (in-package :lox.parser)
 
 ;;; Parser base code
@@ -31,8 +32,8 @@
 (defun* check ((parser parser) (token-type token:token-type))
   "Returns Boolean. Checks token type."
   (if (at-end-p parser) nil
-      (token:token-type= token-type
-                         (token:get-token-type (peek parser)))))
+      (eq token-type
+          (token:get-token-type (peek parser)))))
 
 (defun* advance ((parser parser))
   "Consume and return token."
@@ -41,8 +42,8 @@
   (previous parser))
 
 (defun* at-end-p ((parser parser))
-  (token:token-type= 'EOF
-                     (token:get-token-type (peek parser))))
+  (eq 'EOF
+      (token:get-token-type (peek parser))))
 
 (defun* peek ((parser parser))
   "Peek token."
@@ -66,8 +67,8 @@
 (defun* make-lox-parse-error ((token token:token) (message string))
   "Create condition, report in lox and return condition-"
   ;; Could be so much simpler if we weren't following the book so literally.
-  (if (token:token-type= 'EOF
-                         (token:get-token-type token))
+  (if (eq 'tok-type:EOF
+          (token:get-token-type token))
       (lox.error:report (token:get-line token)
                         " at end" message)
       (lox.error:report (token:get-line token)
@@ -83,11 +84,17 @@
 (defun* synchronize ((parser parser))
   (advance parser)
   (loop while (and (not (at-end-p parser))
-                   (not (token:token-type= 'SEMICOLON
-                                           (token:get-token-type (previous parser))))
+                   (not (eq 'tok-type:SEMICOLON
+                            (token:get-token-type (previous parser))))
                    (not (member (token:get-token-type (peek parser))
-                                '(CLASS FUN VAR FOR IF WHILE PRINT RETURN)
-                                :test #'token:token-type=)))
+                                '(tok-type:CLASS
+                                  tok-type:FUN
+                                  tok-type:VAR
+                                  tok-type:FOR
+                                  tok-type:IF
+                                  tok-type:WHILE
+                                  tok-type:PRINT
+                                  tok-type:RETURN))))
         do (advance parser)))
 
 ;;; LANGUAGE implementation
@@ -110,7 +117,7 @@
 
 (defun* equality ((parser parser))
   (let ((expr (comparison parser)))
-    (loop while (match parser 'BANG_EQUAL 'EQUAL_EQUAL)
+    (loop while (match parser 'tok-type:BANG_EQUAL 'tok-type:EQUAL_EQUAL)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
@@ -119,7 +126,11 @@
 
 (defun* comparison ((parser parser))
   (let ((expr (addition parser)))
-    (loop while (match parser 'GREATER 'GREATER_EQUAL 'LESS 'LESS_EQUAL)
+    (loop while (match parser
+                  'tok-type:GREATER
+                  'tok-type:GREATER_EQUAL
+                  'tok-type:LESS
+                  'tok-type:LESS_EQUAL)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
@@ -128,7 +139,7 @@
 
 (defun* addition ((parser parser))
   (let ((expr (multiplication parser)))
-    (loop while (match parser 'MINUS 'PLUS)
+    (loop while (match parser 'tok-type:MINUS 'tok-type:PLUS)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
@@ -137,7 +148,7 @@
 
 (defun* multiplication ((parser parser))
   (let ((expr (unary parser)))
-    (loop while (match parser 'STAR 'SLASH)
+    (loop while (match parser 'tok-type:STAR 'tok-type:SLASH)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
@@ -145,23 +156,25 @@
     expr))
 
 (defun* unary ((parser parser))
-  (if (match parser 'BANG 'MINUS) (make-instance 'syntax:unary :operator (previous parser)
-                                                                :right (unary parser))
+  (if (match parser 'tok-type:BANG 'tok-type:MINUS) (make-instance 'syntax:unary :operator (previous parser)
+                                                                                 :right (unary parser))
       (primary parser)))
 
 
 (defun* primary ((parser parser))
   (cond
     ;; Had to disambiguate from nil (issue with false==nil in lisp):
-    ((match parser 'TRUE)  (syntax:make-literal :t))
-    ((match parser 'FALSE) (syntax:make-literal :f))
-    ((match parser 'NIL)   (syntax:make-literal :null))
-    ((match parser 'NUMBER 'STRING)
+    ((match parser 'tok-type:TRUE)  (syntax:make-literal :t))
+    ((match parser 'tok-type:FALSE) (syntax:make-literal :f))
+    ((match parser 'tok-type:NIL)   (syntax:make-literal :null))
+    ((match parser 'tok-type:NUMBER 'tok-type:STRING)
      (syntax:make-literal (token:get-literal (previous parser))))
-    (t (if (match parser 'LEFT_PAREN) (let ((expr (expression parser)))
-                                        (consume parser 'RIGHT_PAREN "Expect ')' after expression.")
-                                        (make-instance 'syntax:grouping
-                                                       :expression expr))
+    (t (if (match parser 'tok-type:LEFT_PAREN) (let ((expr (expression parser)))
+                                                 (consume parser
+                                                          'tok-type:RIGHT_PAREN
+                                                          "Expect ')' after expression.")
+                                                 (make-instance 'syntax:grouping
+                                                                :expression expr))
            (error (make-lox-parse-error (peek parser) "Expect expression."))))))
 
 

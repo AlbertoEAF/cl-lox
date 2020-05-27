@@ -28,9 +28,9 @@
 (defparameter *demo-expr*
   (make-instance 'syntax:binary
                  :left (syntax:make-unary
-                        (make-token 'MINUS "-" nil 1)
+                        (make-token 'lox.token.types:MINUS "-" nil 1)
                         (syntax:make-literal 123))
-                 :operator (make-token 'STAR "*" nil 1)
+                 :operator (make-token 'lox.token.types:STAR "*" nil 1)
                  :right (syntax:make-grouping (syntax:make-literal 45.67))))
 
 ;; (ast-pprint *demo-expr*) ;; demo

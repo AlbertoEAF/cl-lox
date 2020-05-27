@@ -6,37 +6,13 @@
    ;; token slot readers
    :get-lexeme :get-token-type :get-literal :get-line
    ;; utils
-   :to-string :lexeme :token-type=))
+   :to-string :lexeme))
 
 (in-package :lox.token)
 
 (named-readtables:in-readtable :interpol-syntax)
 
-(defparameter *token-type*
-  '(
-    ;; Single-character tokens.
-    LEFT_PAREN RIGHT_PAREN LEFT_BRACE RIGHT_BRACE
-    COMMA DOT MINUS PLUS SEMICOLON SLASH STAR
-
-    ;; One or two character tokens.
-    BANG BANG_EQUAL
-    EQUAL EQUAL_EQUAL
-    GREATER GREATER_EQUAL
-    LESS LESS_EQUAL
-
-    ;; Literals.
-    IDENTIFIER STRING NUMBER
-
-    ;; Keywords.
-    AND CLASS ELSE FALSE FUN FOR IF NIL OR
-    PRINT RETURN SUPER THIS TRUE VAR WHILE
-
-    EOF))
-
-(defun token-type= (a b)
-  (string= a b))
-
-(defun token-type-p (x) (member x *token-type* :test #'string=))
+(defun token-type-p (x) (member x lox.token.types::*token-types* :test 'eq))
 (deftype token-type () `(satisfies token-type-p))
 
 (defclass+ token ()

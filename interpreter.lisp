@@ -1,7 +1,9 @@
 (defpackage :lox.interpreter
   (:use :cl :defstar :defclass+)
+  (:export :interpret)
   (:local-nicknames (#:syntax #:lox.syntax)
-                    (#:token  #:lox.token)))
+                    (#:token  #:lox.token)
+                    (#:tok-type #:lox.token.types)))
 (in-package :lox.interpreter)
 
 ;; In the book the methods `evaluate` are called `visit-{literal,unary,...}`.
@@ -49,40 +51,39 @@
 (defmethod evaluate ((expr syntax:unary))
   (let ((right (evaluate (slot-value expr 'syntax:right)))
         (operator-token-type (token:get-token-type (slot-value expr 'syntax:operator))))
-    (cond ((token:token-type= 'MINUS operator-token-type)
+    (cond ((eql 'tok-type:MINUS operator-token-type)
            (- right))
-          ((token:token-type= 'BANG operator-token-type)
+          ((eql 'tok-type:BANG operator-token-type)
            (not-truthy-p right)))))
 
 (defmethod evaluate ((expr syntax:binary))
   (let* ((left (evaluate (slot-value expr 'syntax:left)))
          (right (evaluate (slot-value expr 'syntax:right)))
          (operator (slot-value expr 'syntax:operator))
-         (operator-token-type (intern
-                               (string-upcase
-                                (token:get-token-type operator))))
+         (operator-token-type (token:get-token-type operator))
          (simple-op (case operator-token-type
-                      (SLASH '/)
-                      (STAR '*)
-                      (MINUS '-)
-                      (GREATER '>)
-                      (GREATER_EQUAL '>=)
-                      (LESS '<)
-                      (LESS_EQUAL '<=))))
+                      (tok-type::SLASH '/)
+                      (tok-type::STAR '*)
+                      (tok-type::MINUS '-)
+                      (tok-type::GREATER '>)
+                      (tok-type::GREATER_EQUAL '>=)
+                      (tok-type::LESS '<)
+                      (tok-type::LESS_EQUAL '<=))))
     (if simple-op (progn (check-number-operands operator left right)
                          (funcall simple-op left right))
         (case operator-token-type
-          (PLUS
+          (tok-type:PLUS
            (cond ((type? 'string left right)
                   (format nil "~A~A" left right))
                  ((type? 'number left right)
                   (+ left right))
                  (t
-                  (error 'lox.error:lox-runtime-error :token operator
-                                            :message "Operators must be two numbers or two strings."))))
-          (BANG_EQUAL (not (is-equal left right)))
-          (EQUAL_EQUAL (is-equal left right))
-          (t nil)))))
+                  (error 'lox.error:lox-runtime-error
+                         :token operator
+                         :message "Operators must be two numbers or two strings."))))
+          (tok-type::BANG_EQUAL (not (is-equal left right)))
+          (tok-type::EQUAL_EQUAL (is-equal left right))
+          (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
 
 (defun stringify (obj)
   (flet ((lox-number-string-repr (num)
@@ -96,13 +97,13 @@
                    (t num-str)))))
     (cond ((or (null obj)
                (eql obj :null))
-           "nil")
+           "lox-nil")
           ((typep obj 'number) (lox-number-string-repr obj))
           (t (format nil "~A" obj)))))
 
 
 (defun* interpret ((expression syntax:expr))
   (handler-case
-      (format t "~A" (stringify (evaluate expression)))
+      (format nil "~A" (stringify (evaluate expression)))
     (lox.error:lox-runtime-error (e)     ;; condition
       (lox.error:lox-runtime-error e)))) ;; function
