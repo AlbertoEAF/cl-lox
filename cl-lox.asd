@@ -14,6 +14,8 @@
                (:file "lox-token")
                (:file "lox-error")
                (:file "scanner")
+               (:file "syntax/syntax-expr")
+               (:file "syntax/syntax-stmt")
                (:file "syntax/syntax")
                (:file "syntax/pprint")
                (:file "lox-parser")

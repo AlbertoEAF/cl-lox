@@ -110,8 +110,21 @@
           (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
 
 
-(defun* interpret ((expression syntax:expr))
+(defmethod execute ((stmt syntax:stmt-expression))
+  (evaluate (slot-value stmt 'syntax:expression))
+  nil)
+
+(defmethod execute ((stmt syntax:stmt-print))
+  (format t "~A~%" (stringify (evaluate (slot-value stmt 'syntax:expression))))
+  nil)
+
+(defmethod execute ((stmt syntax:stmt))
+  (execute stmt))
+
+(defun* interpret ((statements list))
   (handler-case
-      (format nil "~A" (stringify (evaluate expression)))
-    (lox.error:lox-runtime-error (e)     ;; condition
-      (lox.error:lox-runtime-error e)))) ;; function
+      (loop for stmt in statements
+            do (execute stmt))
+    (lox.error:lox-runtime-error (e)
+      ;; Call runtime error handler (function with same name as condition):
+      (lox.error:lox-runtime-error e))))

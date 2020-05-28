@@ -14,12 +14,14 @@
 
 
 (defun run (source-code)
+  (declare (type string source-code))
+  (lox.error:reset)
   (let* ((scanner (make-scanner source-code))
          (tokens (scan-tokens scanner))
          (parser (make-parser tokens))
-         (expression (parse parser)))
+         (statements (parse parser)))
     (when (null lox.error::*had-error*)
-      (princ (lox.interpreter:interpret expression)))))
+      (princ (lox.interpreter:interpret statements)))))
 
 (defun exit (&optional (code 65))
   (sb-ext:exit :code code))

@@ -42,7 +42,7 @@
   (previous parser))
 
 (defun* at-end-p ((parser parser))
-  (eq 'EOF
+  (eq 'tok-type:EOF
       (token:get-token-type (peek parser))))
 
 (defun* peek ((parser parser))
@@ -101,6 +101,22 @@
 
 (defun* expression ((parser parser))
   (equality parser))
+
+(defun* statement ((parser parser))
+  (if (match parser 'tok-type:PRINT) (print-statement parser)
+      (expression-statement parser)))
+
+(defun* print-statement ((parser parser))
+  (let ((expr (expression parser)))
+    (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
+    (make-instance 'lox.syntax:stmt-print
+                   :expression expr)))
+
+(defun* expression-statement ((parser parser))
+  (let* ((expr (expression parser)))
+    (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
+    (make-instance 'lox.syntax:stmt-expression
+                   :expression expr)))
 
 (defun* parse-left-associative-binary ((parser parser)
                                        parse-fn
@@ -180,10 +196,13 @@
 
 (defun* parse ((parser parser))
   (handler-case
-      (expression parser)
+      (loop while (not (at-end-p parser))
+            collect (statement parser))
     (lox-parse-error (e)
       (with-slots (token message) e
         (format t "ERROR ~A ~% tok=~A~% msg=~A)~%" e token message)))))
+
+
 
 (defun parse-from-source (source)
   "Helper method just to try things out"

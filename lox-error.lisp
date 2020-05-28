@@ -1,12 +1,16 @@
 (defpackage :lox.error
   (:use :cl)
   (:export :*had-error* :*had-runtime-error*
-           :lox-error :lox-runtime-error :report))
+           :lox-error :lox-runtime-error :report
+           :reset))
 (in-package :lox.error)
 
 (defparameter *had-error* nil "Lox's error state - Say wat? yup we're avoiding Lisp's condition system :D")
 (defparameter *had-runtime-error* nil "Lox's runtime error state.")
 
+(defun reset ()
+  (setf *had-error* nil
+        *had-runtime-error* nil))
 
 (defun lox-error (line message)
   (declare (integer line))
