@@ -2,9 +2,9 @@
   (:use :cl :lox.token :defclass-std :defclass+)
   (:export
    ;; Syntax types
-   :expr :binary :grouping :literal :unary
+   :expr :binary :grouping :literal :unary :var
    ;; Constructors
-   :make-binary :make-literal :make-grouping :make-unary
+   :make-binary :make-literal :make-grouping :make-unary :make-var
    ;; Accessors
    :left :right :operator :expression :value))
 (in-package :lox.syntax.expr)
@@ -12,21 +12,6 @@
 
 (defclass expr ()
   ())
-
-;; Example of defclass+ binary expansion:
-;;
-;; (defclass binary (expr)
-;;   ((left
-;;     :initarg :left
-;;     :type expr)
-;;    (operator
-;;     :initarg :operator
-;;     :type token)
-;;    (right
-;;     :initarg :right
-;;     :type expr))
-;;   (:metaclass checked-class))
-
 
 (defclass+ binary (expr)
   ((left :type expr)
@@ -43,6 +28,9 @@
   ((operator :type token)
    (right :type expr)))
 
+(defclass+ var (expr)
+  ((name :type token)))
+
 (defun make-binary (left operator right)
   (make-instance 'binary :left left :operator operator :right right))
 
@@ -54,6 +42,9 @@
 
 (defun make-unary (operator right)
   (make-instance 'unary :operator operator :right right))
+
+(defun make-var (name)
+  (make-instance 'var :name name))
 
 (defun get-slot-names (clos-obj)
   (mapcar #'sb-mop:slot-definition-name

@@ -1,5 +1,5 @@
 (defpackage :lox.parser
-  (:use :cl :defclass+ :defstar)
+  (:use :cl :defclass+ :defstar :cl-extensions)
   (:export :make-parser :parse)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
@@ -106,6 +106,14 @@
   (if (match parser 'tok-type:PRINT) (print-statement parser)
       (expression-statement parser)))
 
+(defun* lox-declaration ((parser parser))
+  (handler-case
+      (if (match parser 'tok-type:VAR) (var-declaration parser)
+          (statement parser))
+    (lox-parse-error (e)
+      (synchronize parser)
+      nil)))
+
 (defun* print-statement ((parser parser))
   (let ((expr (expression parser)))
     (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
@@ -117,6 +125,16 @@
     (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
     (make-instance 'lox.syntax:stmt-expression
                    :expression expr)))
+
+(defun* var-declaration ((parser parser))
+  (let ((name (consume parser 'tok-type:IDENTIFIER "Expect variable name."))
+        (initializer (if (match parser 'tok-type:EQUAL) (expression parser)
+                         nil)))
+    (consume parser 'tok-type:SEMICOLON "Expect ';' after variable declaration.")
+    (make-instance 'lox.syntax.stmt:stmt-var-declaration
+                   :name name
+                   :initializer initializer)))
+
 
 (defun* parse-left-associative-binary ((parser parser)
                                        parse-fn
@@ -178,29 +196,28 @@
 
 
 (defun* primary ((parser parser))
-  (cond
-    ;; Had to disambiguate from nil (issue with false==nil in lisp):
-    ((match parser 'tok-type:TRUE)  (syntax:make-literal :t))
-    ((match parser 'tok-type:FALSE) (syntax:make-literal :f))
-    ((match parser 'tok-type:NIL)   (syntax:make-literal :null))
-    ((match parser 'tok-type:NUMBER 'tok-type:STRING)
-     (syntax:make-literal (token:get-literal (previous parser))))
-    (t (if (match parser 'tok-type:LEFT_PAREN) (let ((expr (expression parser)))
-                                                 (consume parser
-                                                          'tok-type:RIGHT_PAREN
-                                                          "Expect ')' after expression.")
-                                                 (make-instance 'syntax:grouping
-                                                                :expression expr))
-           (error (make-lox-parse-error (peek parser) "Expect expression."))))))
+  (with-curry (match previous) parser
+    (cond
+      ;; Had to disambiguate from nil (issue with false==nil in lisp):
+      ((match 'tok-type:TRUE)  (syntax:make-literal :t))
+      ((match 'tok-type:FALSE) (syntax:make-literal :f))
+      ((match 'tok-type:NIL)   (syntax:make-literal :null))
+      ((match 'tok-type:NUMBER 'tok-type:STRING)
+       (syntax:make-literal (token:get-literal (previous))))
+      ((match 'tok-type:IDENTIFIER)
+       (syntax:make-var (previous)))
+      (t (if (match 'tok-type:LEFT_PAREN) (let ((expr (expression parser)))
+                                             (consume parser
+                                                      'tok-type:RIGHT_PAREN
+                                                      "Expect ')' after expression.")
+                                             (syntax:make-grouping expr))
+             (error (make-lox-parse-error (peek parser) "Expect expression.")))))))
 
 
 (defun* parse ((parser parser))
   (handler-case
       (loop while (not (at-end-p parser))
-            collect (statement parser))
-    (lox-parse-error (e)
-      (with-slots (token message) e
-        (format t "ERROR ~A ~% tok=~A~% msg=~A)~%" e token message)))))
+            collect (lox-declaration parser))))
 
 
 

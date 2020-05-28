@@ -128,3 +128,7 @@
     (lox.error:lox-runtime-error (e)
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
+
+(defclass+ interpreter ()
+  ((environment :type lox.environment:environment)))
+

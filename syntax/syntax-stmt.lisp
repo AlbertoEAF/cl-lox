@@ -1,13 +1,11 @@
 (defpackage :lox.syntax.stmt
-  (:use :cl :lox.token :defclass-std :defclass+)
-  (:export :stmt
+  (:use :cl :defclass-std :defclass+)
+  (:shadowing-import-from "LOX.SYNTAX.EXPR"
+                          "EXPRESSION")
+  (:export
    ;; Statement classes
-   :stmt-expression :stmt-print))
-   
+   :stmt :stmt-expression :stmt-print :stmt-var-declaration))
 (in-package :lox.syntax.stmt)
-(proclaim '(optimize safety))
-
-(shadowing-import (find-symbol "EXPRESSION" "LOX.SYNTAX.EXPR"))
 
 (defclass+ stmt ()
   ())
@@ -17,3 +15,7 @@
 
 (defclass+ stmt-print (stmt)
   ((expression :type lox.syntax.expr:expr)))
+
+(defclass+ stmt-var-declaration (stmt)
+  ((name :type lox.token:token)
+   (initializer :type (or null lox.syntax.expr:expr))))

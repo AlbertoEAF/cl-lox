@@ -11,8 +11,6 @@
    :meta-var "script"
    :arg-parser #'identity))
 
-
-
 (defun run (source-code)
   (declare (type string source-code))
   (lox.error:reset)
@@ -30,8 +28,6 @@
   (run (uiop:read-file-line filepath))
   (when lox.error::*had-error* (exit 65))
   (when lox.error::*had-runtime-error* (exit 70)))
-
-
 
 (defun run-prompt ()
   (loop do

@@ -26,7 +26,12 @@
           :accessor token)
    (message :initarg :message
             :accessor message))
-  (:documentation "Lox Runtime Error."))
+  (:documentation "Lox Runtime Error.")
+  (:report (lambda (condition stream)
+             (with-slots (token message) condition
+               (format stream "Lox Runtime Error signalled: ~A~%~% TOKEN=<~A>~%"
+                       message token)))))
+
 
 (defun lox-runtime-error (lox-runtime-error)
   (format *error-output* "~A~%[line ~A]"
@@ -34,5 +39,3 @@
           (lox.token:get-line (token lox-runtime-error)))
   (setf *had-runtime-error* t)
   nil)
-
-
