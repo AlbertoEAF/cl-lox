@@ -30,11 +30,21 @@
   (when lox.error::*had-error* (exit 65))
   (when lox.error::*had-runtime-error* (exit 70)))
 
+(defun read-multi-line ()
+  "Reads until a line is empty into a list."
+  (loop for line = (read-line)
+        until (equal "" line)
+        collect line))
+
+(defun read-multi-line-string ()
+  "Stops reading on an empty line."
+  (format nil "~{~A~^~%~}" (read-multi-line)))
+
 (defun run-prompt ()
   (loop do
     (format t "> ")
     (finish-output t)
-    (run (read-line))
+    (run (read-multi-line-string))
     (format t "~%")
     (setf lox.error::*had-error*         nil
           lox.error::*had-runtime-error* nil)))
