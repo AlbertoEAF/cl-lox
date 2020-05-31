@@ -100,7 +100,7 @@
 ;;; LANGUAGE implementation
 
 (defun* expression ((parser parser))
-  (equality parser))
+  (assignment parser))
 
 (defun* statement ((parser parser))
   (if (match parser 'tok-type:PRINT) (print-statement parser)
@@ -125,6 +125,18 @@
     (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
     (make-instance 'lox.syntax:stmt-expression
                    :expression expr)))
+
+(defun* assignment ((parser parser))
+  (let ((expr (equality parser)))
+    (when (match parser 'tok-type:EQUAL)
+      (let ((equals (previous parser)) (value (assignment parser)))
+        (if (typep expr 'syntax:var)
+            (let ((name (slot-value expr 'syntax:name)))
+              (return-from assignment (syntax:make-assign name
+                                                          value)))
+            (error
+             (make-lox-parse-error equals "Invalid assignment target.")))))
+    expr))
 
 (defun* var-declaration ((parser parser))
   (let ((name (consume parser 'tok-type:IDENTIFIER "Expect variable name."))
@@ -190,10 +202,9 @@
     expr))
 
 (defun* unary ((parser parser))
-  (if (match parser 'tok-type:BANG 'tok-type:MINUS) (make-instance 'syntax:unary :operator (previous parser)
-                                                                                 :right (unary parser))
+  (if (match parser 'tok-type:BANG 'tok-type:MINUS) (syntax:make-unary (previous parser)
+                                                                       (unary parser))
       (primary parser)))
-
 
 (defun* primary ((parser parser))
   (with-curry (match previous) parser

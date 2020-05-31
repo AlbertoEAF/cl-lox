@@ -1,0 +1,11 @@
+var num_cats = 12;
+var num_dogs = 5;
+var question = "Are there more dogs than cats?";
+
+print "There are " + num_cats + " and " + num_dogs + " dogs.";
+
+print question;
+print num_dogs > num_cats;
+
+print "Well, now I guess we know the answer ;)";
+

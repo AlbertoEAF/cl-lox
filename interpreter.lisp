@@ -20,6 +20,14 @@ Compared to the book:
 (defun make-interpreter ()
   (make-instance 'interpreter))
 
+
+(defgeneric evaluate (env expr)
+  (:documentation "For expressions. Equivalent to lox's visit<X>Expr."))
+
+(defgeneric execute (env stmt)
+  (:documentation "For statements. Equivalent to lox's visit<X>Stmt"))
+
+
 (defun truthy-p (expr)
   (case expr
     ((nil :f :null) :f)
@@ -121,8 +129,12 @@ Compared to the book:
           (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
 
 (defmethod evaluate ((env env:environment) (expr syntax:var))
-  (env:get-value env (slot-value expr 'lox.syntax.expr::name)))
+  (env:get-value env (slot-value expr 'lox.syntax.expr:name)))
 
+(defmethod evaluate ((env env:environment) (expr syntax:assign))
+  (let* ((name (slot-value expr 'syntax:name))
+         (value (evaluate env (slot-value expr 'syntax:value))))
+    (env:assign env name value)))
 
 (defmethod execute ((env env:environment) (stmt syntax:stmt-expression))
   (evaluate env (slot-value stmt 'syntax:expression))

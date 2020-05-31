@@ -4,14 +4,18 @@
    ;; Syntax types
    :expr :binary :grouping :literal :unary :var
    ;; Constructors
-   :make-binary :make-literal :make-grouping :make-unary :make-var
+   :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign
    ;; Accessors
-   :left :right :operator :expression :value))
+   :left :right :operator :expression :value :assign :name))
 (in-package :lox.syntax.expr)
 (proclaim '(optimize safety))
 
 (defclass expr ()
   ())
+
+(defclass+ assign (expr)
+  ((name :type token)
+   (value :type expr)))
 
 (defclass+ binary (expr)
   ((left :type expr)
@@ -30,6 +34,9 @@
 
 (defclass+ var (expr)
   ((name :type token)))
+
+(defun make-assign (name value)
+  (make-instance 'assign :name name :value value))
 
 (defun make-binary (left operator right)
   (make-instance 'binary :left left :operator operator :right right))

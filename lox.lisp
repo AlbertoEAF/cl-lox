@@ -11,6 +11,22 @@
    :meta-var "script"
    :arg-parser #'identity))
 
+(defun exit (&optional (code 65))
+  (sb-ext:exit :code code))
+
+(defun read-multi-line ()
+  "Reads until a line is empty into a list."
+  (loop for line = (read-line)
+        until (equal "" line)
+        collect line))
+
+(defun concatenate-lines (lines)
+  (format nil "~{~A~^~%~}" lines))
+
+(defun read-multi-line-string ()
+  "Stops reading on an empty line."
+  (concatenate-lines (read-multi-line)))
+
 (defun run (source-code)
   (declare (type string source-code))
   (lox.error:reset)
@@ -22,23 +38,11 @@
     (when (null lox.error::*had-error*)
       (princ (lox.interpreter:interpret interpreter statements)))))
 
-(defun exit (&optional (code 65))
-  (sb-ext:exit :code code))
-
 (defun run-file (filepath)
-  (run (uiop:read-file-line filepath))
+  (format t "Running file ~A.~%~%" filepath)
+  (run (concatenate-lines (uiop:read-file-lines filepath)))
   (when lox.error::*had-error* (exit 65))
   (when lox.error::*had-runtime-error* (exit 70)))
-
-(defun read-multi-line ()
-  "Reads until a line is empty into a list."
-  (loop for line = (read-line)
-        until (equal "" line)
-        collect line))
-
-(defun read-multi-line-string ()
-  "Stops reading on an empty line."
-  (format nil "~{~A~^~%~}" (read-multi-line)))
 
 (defun run-prompt ()
   (loop do

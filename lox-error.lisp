@@ -34,8 +34,8 @@
 
 
 (defun lox-runtime-error (lox-runtime-error)
-  (format *error-output* "~A~%[line ~A]"
-          (message lox-runtime-error)
-          (lox.token:get-line (token lox-runtime-error)))
+  (format *error-output* "[line ~A] ~A~%"
+          (lox.token:get-line (token lox-runtime-error))
+          (message lox-runtime-error))
   (setf *had-runtime-error* t)
   nil)
