@@ -3,7 +3,8 @@
   (:export
    :environment
    :make-environment
-   :define))
+   :define
+   :get-value))
 (in-package :lox.environment)
 
 (defclass+ environment ()

@@ -17,9 +17,10 @@
   (let* ((scanner (make-scanner source-code))
          (tokens (scan-tokens scanner))
          (parser (make-parser tokens))
-         (statements (parse parser)))
+         (statements (parse parser))
+         (interpreter (lox.interpreter:make-interpreter)))
     (when (null lox.error::*had-error*)
-      (princ (lox.interpreter:interpret statements)))))
+      (princ (lox.interpreter:interpret interpreter statements)))))
 
 (defun exit (&optional (code 65))
   (sb-ext:exit :code code))

@@ -1,13 +1,24 @@
 (defpackage :lox.interpreter
   (:use :cl :defstar :defclass+)
-  (:export :interpret)
+  (:export :interpret :make-interpreter)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
-                    (#:tok-type #:lox.token.types)))
+                    (#:tok-type #:lox.token.types)
+                    (#:env      #:lox.environment)))
 (in-package :lox.interpreter)
 
-;; In the book the methods `evaluate` are called `visit-{literal,unary,...}`.
-;; As we don't need the visitor pattern there isn't the class interpreter either.
+#|
+Compared to the book:
+ - visit<X>Expr() -> evaluate call
+ - visit<X>Stmt() -> execute call
+|#
+
+(defclass+ interpreter ()
+  ((environment :type env:environment
+                :initform (env:make-environment))))
+
+(defun make-interpreter ()
+  (make-instance 'interpreter))
 
 (defun truthy-p (expr)
   (case expr
@@ -39,17 +50,17 @@
     (error 'lox.error:lox-runtime-error :token operator :message "Operands must be numbers.")))
 
 
-(defmethod evaluate ((expr syntax:expr))
+(defmethod evaluate ((env env:environment) (expr syntax:expr))
   expr)
 
-(defmethod evaluate ((expr syntax:literal))
+(defmethod evaluate ((env env:environment) (expr syntax:literal))
   (slot-value expr 'syntax:value))
 
-(defmethod evaluate ((expr syntax:grouping))
-  (evaluate (slot-value expr 'syntax:expression)))
+(defmethod evaluate ((env env:environment) (expr syntax:grouping))
+  (evaluate env (slot-value expr 'syntax:expression)))
 
-(defmethod evaluate ((expr syntax:unary))
-  (let ((right (evaluate (slot-value expr 'syntax:right)))
+(defmethod evaluate ((env env:environment) (expr syntax:unary))
+  (let ((right (evaluate env (slot-value expr 'syntax:right)))
         (operator-token-type (token:get-token-type (slot-value expr 'syntax:operator))))
     (cond ((eql 'tok-type:MINUS operator-token-type)
            (- right))
@@ -72,9 +83,9 @@
           ((typep obj 'number) (lox-number-string-repr obj))
           (t (format nil "~S" obj)))))
 
-(defmethod evaluate ((expr syntax:binary))
-  (let* ((left (evaluate (slot-value expr 'syntax:left)))
-         (right (evaluate (slot-value expr 'syntax:right)))
+(defmethod evaluate ((env env:environment) (expr syntax:binary))
+  (let* ((left (evaluate env (slot-value expr 'syntax:left)))
+         (right (evaluate env (slot-value expr 'syntax:right)))
          (operator (slot-value expr 'syntax:operator))
          (operator-token-type (token:get-token-type operator))
          (simple-op (case operator-token-type
@@ -109,26 +120,34 @@
           (tok-type::EQUAL_EQUAL (is-equal left right))
           (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
 
+(defmethod evaluate ((env env:environment) (expr syntax:var))
+  (env:get-value env (slot-value expr 'lox.syntax.expr::name)))
 
-(defmethod execute ((stmt syntax:stmt-expression))
-  (evaluate (slot-value stmt 'syntax:expression))
+
+(defmethod execute ((env env:environment) (stmt syntax:stmt-expression))
+  (evaluate env (slot-value stmt 'syntax:expression))
   nil)
 
-(defmethod execute ((stmt syntax:stmt-print))
-  (format t "~A~%" (stringify (evaluate (slot-value stmt 'syntax:expression))))
+(defmethod execute ((env env:environment) (stmt syntax:stmt-print))
+  (format t "~A~%" (stringify (evaluate env (slot-value stmt 'syntax:expression))))
   nil)
 
-(defmethod execute ((stmt syntax:stmt))
+(defmethod execute ((env env:environment) (stmt syntax:stmt-var-declaration))
+  (with-slots (lox.syntax.stmt::name lox.syntax.stmt::initializer) stmt
+    (let ((value (if lox.syntax.stmt::initializer (evaluate env lox.syntax.stmt::initializer))))
+      (env:define env (token:get-lexeme lox.syntax.stmt::name) value)
+      nil)))
+
+(defmethod execute ((env env:environment) (stmt syntax:stmt))
   (execute stmt))
 
-(defun* interpret ((statements list))
+(defun* interpret ((interpreter interpreter) (statements list))
   (handler-case
       (loop for stmt in statements
-            do (execute stmt))
+            do (execute (slot-value interpreter 'environment) stmt))
     (lox.error:lox-runtime-error (e)
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
 
-(defclass+ interpreter ()
-  ((environment :type lox.environment:environment)))
+
 

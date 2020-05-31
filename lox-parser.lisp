@@ -221,9 +221,9 @@
 
 
 
-(defun parse-from-source (source)
-  "Helper method just to try things out"
-  (lox.parser:parse
-   (lox.parser:make-parser
-    (lox.scanner:scan-tokens
-     (lox.scanner:make-scanner source)))))
+;; (defun parse-from-source (source)
+;;   "Helper method just to try things out"
+;;   (lox.parser:parse
+;;    (lox.parser:make-parser
+;;     (lox.scanner:scan-tokens
+;;      (lox.scanner:make-scanner source)))))
