@@ -103,14 +103,16 @@
   (assignment parser))
 
 (defun* statement ((parser parser))
-  (if (match parser 'tok-type:PRINT) (print-statement parser)
-      (expression-statement parser)))
+  (cond ((match parser 'tok-type:PRINT) (print-statement parser))
+        ((match parser 'tok-type:LEFT_BRACE) (make-instance 'lox.syntax.stmt:stmt-block
+                                                            :statements (lox-block parser)))
+        (t (expression-statement parser))))
 
 (defun* lox-declaration ((parser parser))
   (handler-case
       (if (match parser 'tok-type:VAR) (var-declaration parser)
           (statement parser))
-    (lox-parse-error (e)
+    (lox-parse-error ()
       (synchronize parser)
       nil)))
 
@@ -141,12 +143,19 @@
 (defun* var-declaration ((parser parser))
   (let ((name (consume parser 'tok-type:IDENTIFIER "Expect variable name."))
         (initializer (if (match parser 'tok-type:EQUAL) (expression parser)
-                         nil)))
+                         (syntax:make-literal :lox-unitialized-var))))
     (consume parser 'tok-type:SEMICOLON "Expect ';' after variable declaration.")
     (make-instance 'lox.syntax.stmt:stmt-var-declaration
                    :name name
                    :initializer initializer)))
 
+(defun* lox-block ((parser parser))
+  (loop while (and (not (check parser 'tok-type:RIGHT_BRACE))
+                   (not (at-end-p parser)))
+        collect (lox-declaration parser) into statements
+        finally
+           (consume parser 'tok-type:RIGHT_BRACE "Expect '}' after block.")
+           (return statements)))
 
 (defun* parse-left-associative-binary ((parser parser)
                                        parse-fn

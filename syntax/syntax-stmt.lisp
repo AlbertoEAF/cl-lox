@@ -4,7 +4,11 @@
                           "EXPRESSION")
   (:export
    ;; Statement classes
-   :stmt :stmt-expression :stmt-print :stmt-var-declaration))
+   :stmt
+   :stmt-expression
+   :stmt-print
+   :stmt-var-declaration
+   :stmt-block))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -19,3 +23,7 @@
 (defclass+ stmt-var-declaration (stmt)
   ((name :type lox.token:token)
    (initializer :type (or null lox.syntax.expr:expr))))
+
+(defclass+ stmt-block (stmt)
+  ;; Probably could add checking of individual items at introduction (list stmt*)
+  ((statements :type list)))

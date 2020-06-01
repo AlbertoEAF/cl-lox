@@ -10,10 +10,12 @@
 
 (defclass+ environment ()
   ((values :type hash-table
-           :initform (make-hash-table :test 'equal))))
+           :initform (make-hash-table :test 'equal))
+   (enclosing :type (or null environment)
+              :initform nil)))
 
-(defun make-environment ()
-  (make-instance 'environment))
+(defun make-environment (&optional enclosing)
+  (make-instance 'environment :enclosing enclosing))
 
 (defun* define ((env environment) (name string) value)
   "Used in variable declarations, to define the variable value."
@@ -22,24 +24,29 @@
 
 (defun* assign ((env environment) (name lox.token:token) value)
   "Used to define the value of the variable in a variable declaration."
-  (with-slots (values) env
+  (with-slots (values enclosing) env
     (let ((name-lexeme (lox.token:get-lexeme name)))
-      (multiple-value-bind (old-value present-p) (gethash name-lexeme values)
-        (declare (ignore old-value))
-        (if present-p (setf (gethash name-lexeme values)
-                            value)
-            (lox.error:lox-runtime-error
-             (make-condition 'lox.error:lox-runtime-error
-                             :token name
-                             :message (format nil "Undefined variable '~A'." name-lexeme))))))))
+      (multiple-value-bind (_ present-p) (gethash name-lexeme values)
+        (declare (ignore _))
+        (cond (present-p (setf (gethash name-lexeme values)
+                               value))
+              (enclosing (assign enclosing name value))
+              (t
+               (lox.error:lox-runtime-error
+                (make-condition 'lox.error:lox-runtime-error
+                                :token name
+                                :message (format nil "Undefined variable '~A'." name-lexeme)))))))))
 
-(defun* get-value ((environment environment) (name lox.token:token))
-  (multiple-value-bind (value present-p)
-      (gethash (lox.token:get-lexeme name)
-               (slot-value environment 'values))
-    (if present-p value
-        (lox.error:lox-runtime-error
-         (make-condition 'lox.error:lox-runtime-error
-                         :token name
-                         :message (format nil "Undefined variable '~A'."
-                                          (lox.token:get-lexeme name)))))))
+(defun* get-value ((env environment) (name lox.token:token))
+  (with-slots (values enclosing) env
+      (multiple-value-bind (value present-p)
+          (gethash (lox.token:get-lexeme name)
+                   values)
+        (cond (present-p value)
+              (enclosing (get-value enclosing name))
+              (t
+               (lox.error:lox-runtime-error
+                (make-condition 'lox.error:lox-runtime-error
+                                :token name
+                                :message (format nil "Undefined variable '~A'."
+                                                 (lox.token:get-lexeme name)))))))))

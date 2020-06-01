@@ -105,7 +105,7 @@ Compared to the book:
                       (tok-type:LESS_EQUAL '<=))))
     (if simple-op (progn (check-number-operands operator left right)
                          (funcall simple-op left right))
-        (case operator-token-type
+        (ecase operator-token-type
           (tok-type:SLASH
            (if (zerop right) (error 'lox.error:lox-runtime-error
                                     :token operator
@@ -125,11 +125,19 @@ Compared to the book:
                          :token operator
                          :message "Operators must be two numbers or two strings."))))
           (tok-type::BANG_EQUAL (not (is-equal left right)))
-          (tok-type::EQUAL_EQUAL (is-equal left right))
-          (t (error "ERROR: this is a Bug! Impossible to reach this place!"))))))
+          (tok-type::EQUAL_EQUAL (is-equal left right))))))
+
 
 (defmethod evaluate ((env env:environment) (expr syntax:var))
-  (env:get-value env (slot-value expr 'lox.syntax.expr:name)))
+  (let* ((name (slot-value expr 'lox.syntax.expr:name))
+         (value (env:get-value env name)))
+    (if (eq value :lox-unitialized-var) (error 'lox.error:lox-runtime-error
+                                               :token name
+                                               :message (format nil "Unitialized variable '~A'."
+                                                                (token:get-lexeme name)))
+        value)))
+
+
 
 (defmethod evaluate ((env env:environment) (expr syntax:assign))
   (let* ((name (slot-value expr 'syntax:name))
@@ -150,6 +158,15 @@ Compared to the book:
       (env:define env (token:get-lexeme lox.syntax.stmt::name) value)
       nil)))
 
+(defun* execute-block ((statements list) (new-env env:environment))
+  (loop for statement in statements do (execute new-env statement)))
+
+(defmethod execute ((current-env env:environment) (stmt lox.syntax.stmt:stmt-block))
+  (execute-block (slot-value stmt 'lox.syntax.stmt::statements)
+                 (env:make-environment current-env))
+  nil)
+
+
 (defmethod execute ((env env:environment) (stmt syntax:stmt))
   (execute stmt))
 
@@ -160,6 +177,3 @@ Compared to the book:
     (lox.error:lox-runtime-error (e)
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
-
-
-
