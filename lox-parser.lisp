@@ -106,6 +106,7 @@
   (cond ((match parser 'tok-type:PRINT) (print-statement parser))
         ((match parser 'tok-type:LEFT_BRACE) (make-instance 'lox.syntax.stmt:stmt-block
                                                             :statements (lox-block parser)))
+        ((match parser 'tok-type:IF) (if-statement parser))
         (t (expression-statement parser))))
 
 (defun* lox-declaration ((parser parser))
@@ -121,6 +122,21 @@
     (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
     (make-instance 'lox.syntax:stmt-print
                    :expression expr)))
+
+(defun* if-statement ((parser parser))
+  (with-curry (consume match expression statement) parser
+    (consume 'tok-type:LEFT_PAREN "Expect '(' after if.")
+    (let ((condition (expression)))
+      (consume 'tok-type:RIGHT_PAREN "Expect ')' after if condition.")
+      (let* ((then-branch (statement))
+             (else-branch (if (match 'tok-type:ELSE)
+                              (statement))))
+        (make-instance 'lox.syntax.stmt:stmt-if
+                       :condition condition
+                       :then-branch then-branch
+                       :else-branch else-branch)))))
+
+
 
 (defun* expression-statement ((parser parser))
   (let* ((expr (expression parser)))

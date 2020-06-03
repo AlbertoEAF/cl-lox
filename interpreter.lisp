@@ -137,8 +137,6 @@ Compared to the book:
                                                                 (token:get-lexeme name)))
         value)))
 
-
-
 (defmethod evaluate ((env env:environment) (expr syntax:assign))
   (let* ((name (slot-value expr 'syntax:name))
          (value (evaluate env (slot-value expr 'syntax:value))))
@@ -166,6 +164,13 @@ Compared to the book:
                  (env:make-environment current-env))
   nil)
 
+(defmethod execute ((env env:environment) (if-stmt syntax:stmt-if))
+  (let ((condition (slot-value if-stmt 'LOX.SYNTAX.stmt::condition))
+        (then-branch (slot-value if-stmt 'LOX.SYNTAX.stmt::then-branch))
+        (else-branch (slot-value if-stmt 'LOX.SYNTAX.stmt::else-branch)))
+    (cond ((eq :t (truthy-p (evaluate env condition))) (execute env then-branch))
+          (else-branch (execute env else-branch))))
+  nil)
 
 (defmethod execute ((env env:environment) (stmt syntax:stmt))
   (execute stmt))
