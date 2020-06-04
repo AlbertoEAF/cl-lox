@@ -7,6 +7,8 @@
                     (#:env      #:lox.environment)))
 (in-package :lox.interpreter)
 
+(named-readtables:in-readtable rutils:rutils-readtable)
+
 #|
 Compared to the book:
  - visit<X>Expr() -> evaluate call
@@ -64,22 +66,22 @@ Compared to the book:
   expr)
 
 (defmethod evaluate ((env env:environment) (expr syntax:literal))
-  (slot-value expr 'syntax:value))
+  @expr.value)
 
 (defmethod evaluate ((env env:environment) (expr syntax:logical))
-  (let ((left (evaluate env (slot-value expr 'syntax:left))))
+  (let ((left (evaluate env @expr.left)))
     (cond ((eq 'tok-type:OR
-               (token:get-token-type (slot-value expr 'syntax:operator)))
+               (token:get-token-type @expr.operator))
            (if (eval-truthy-p left) left))
           ((not (eval-truthy-p left)) left)
-          (t (evaluate env (slot-value expr 'syntax:right))))))
+          (t (evaluate env @expr.right)))))
 
 (defmethod evaluate ((env env:environment) (expr syntax:grouping))
-  (evaluate env (slot-value expr 'syntax:expression)))
+  (evaluate env @expr.expression))
 
 (defmethod evaluate ((env env:environment) (expr syntax:unary))
-  (let ((right (evaluate env (slot-value expr 'syntax:right)))
-        (operator-token-type (token:get-token-type (slot-value expr 'syntax:operator))))
+  (let ((right (evaluate env @expr.right))
+        (operator-token-type (token:get-token-type @expr.operator)))
     (cond ((eql 'tok-type:MINUS operator-token-type)
            (- right))
           ((eql 'tok-type:BANG operator-token-type)
@@ -102,9 +104,9 @@ Compared to the book:
           (t (format nil "~S" obj)))))
 
 (defmethod evaluate ((env env:environment) (expr syntax:binary))
-  (let* ((left (evaluate env (slot-value expr 'syntax:left)))
-         (right (evaluate env (slot-value expr 'syntax:right)))
-         (operator (slot-value expr 'syntax:operator))
+  (let* ((left (evaluate env  @expr.left))
+         (right (evaluate env @expr.right))
+         (operator @expr.operator)
          (operator-token-type (token:get-token-type operator))
          (simple-op (case operator-token-type
                       (tok-type:STAR '*)
@@ -139,7 +141,7 @@ Compared to the book:
 
 
 (defmethod evaluate ((env env:environment) (expr syntax:var))
-  (let* ((name (slot-value expr 'lox.syntax.expr:name))
+  (let* ((name @expr.name)
          (value (env:get-value env name)))
     (if (eq value :lox-unitialized-var) (error 'lox.error:lox-runtime-error
                                                :token name
@@ -148,38 +150,35 @@ Compared to the book:
         value)))
 
 (defmethod evaluate ((env env:environment) (expr syntax:assign))
-  (let* ((name (slot-value expr 'syntax:name))
-         (value (evaluate env (slot-value expr 'syntax:value))))
+  (let* ((name @expr.name)
+         (value (evaluate env @expr.value)))
     (env:assign env name value)))
 
 (defmethod execute ((env env:environment) (stmt syntax:stmt-expression))
-  (evaluate env (slot-value stmt 'syntax:expression))
+  (evaluate env @stmt.expression)
   nil)
 
 (defmethod execute ((env env:environment) (stmt syntax:stmt-print))
-  (format t "~A~%" (stringify (evaluate env (slot-value stmt 'syntax:expression))))
+  (format t "~A~%" (stringify (evaluate env @stmt.expression)))
   nil)
 
 (defmethod execute ((env env:environment) (stmt syntax:stmt-var-declaration))
   (with-slots (lox.syntax.stmt::name lox.syntax.stmt::initializer) stmt
-    (let ((value (if lox.syntax.stmt::initializer (evaluate env lox.syntax.stmt::initializer))))
-      (env:define env (token:get-lexeme lox.syntax.stmt::name) value)
+    (let ((value (if @stmt.initializer (evaluate env @stmt.initializer))))
+      (env:define env (token:get-lexeme @stmt.name) value)
       nil)))
 
 (defun* execute-block ((statements list) (new-env env:environment))
   (loop for statement in statements do (execute new-env statement)))
 
 (defmethod execute ((current-env env:environment) (stmt lox.syntax.stmt:stmt-block))
-  (execute-block (slot-value stmt 'lox.syntax.stmt::statements)
+  (execute-block @stmt.statements
                  (env:make-environment current-env))
   nil)
 
 (defmethod execute ((env env:environment) (if-stmt syntax:stmt-if))
-  (let ((condition (slot-value if-stmt 'LOX.SYNTAX.stmt::condition))
-        (then-branch (slot-value if-stmt 'LOX.SYNTAX.stmt::then-branch))
-        (else-branch (slot-value if-stmt 'LOX.SYNTAX.stmt::else-branch)))
-    (cond ((eq :t (truthy-p (evaluate env condition))) (execute env then-branch))
-          (else-branch (execute env else-branch))))
+  (cond ((eq :t (truthy-p (evaluate env @if-stmt.condition))) (execute env @if-stmt.then-branch))
+        (@if-stmt.else-branch (execute env @if-stmt.else-branch)))
   nil)
 
 (defmethod execute ((env env:environment) (stmt syntax:stmt))
@@ -188,7 +187,7 @@ Compared to the book:
 (defun* interpret ((interpreter interpreter) (statements list))
   (handler-case
       (loop for stmt in statements
-            do (execute (slot-value interpreter 'environment) stmt))
+            do (execute @interpreter.environment stmt))
     (lox.error:lox-runtime-error (e)
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
