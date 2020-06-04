@@ -145,15 +145,32 @@
                    :expression expr)))
 
 (defun* assignment ((parser parser))
-  (let ((expr (equality parser)))
+  (let ((expr (lox-or parser)))
     (when (match parser 'tok-type:EQUAL)
       (let ((equals (previous parser)) (value (assignment parser)))
         (if (typep expr 'syntax:var)
             (let ((name (slot-value expr 'syntax:name)))
-              (return-from assignment (syntax:make-assign name
-                                                          value)))
+              (return-from assignment (syntax:make-assign name value)))
             (error
              (make-lox-parse-error equals "Invalid assignment target.")))))
+    expr))
+
+(defun* lox-or ((parser parser))
+  (let ((expr (lox-and parser)))
+    (loop while (match parser 'tok-type:OR)
+          do
+             (let* ((operator (previous parser))
+                    (right (lox-and parser)))
+               (setf expr (syntax:make-logical expr operator right))))
+    expr))
+
+(defun* lox-and ((parser parser))
+  (let ((expr (equality parser)))
+    (loop while (match parser 'tok-type:AND)
+          do
+             (let* ((operator (previous parser))
+                    (right (equality parser)))
+               (setf expr (syntax:make-logical expr operator right))))
     expr))
 
 (defun* var-declaration ((parser parser))

@@ -27,7 +27,6 @@ Compared to the book:
 (defgeneric execute (env stmt)
   (:documentation "For statements. Equivalent to lox's visit<X>Stmt"))
 
-
 (defun truthy-p (expr)
   (case expr
     ((nil :f :null) :f)
@@ -36,6 +35,9 @@ Compared to the book:
 (defun not-truthy-p (expr)
   (if (truthy-p expr) :f
       :t))
+
+(defun eval-truthy-p (expr)
+  (eq :t (truthy-p expr)))
 
 (defun type? (type-specifier &rest vars)
   "Ensure all vars are of type type-specifier."
@@ -63,6 +65,14 @@ Compared to the book:
 
 (defmethod evaluate ((env env:environment) (expr syntax:literal))
   (slot-value expr 'syntax:value))
+
+(defmethod evaluate ((env env:environment) (expr syntax:logical))
+  (let ((left (evaluate env (slot-value expr 'syntax:left))))
+    (cond ((eq 'tok-type:OR
+               (token:get-token-type (slot-value expr 'syntax:operator)))
+           (if (eval-truthy-p left) left))
+          ((not (eval-truthy-p left)) left)
+          (t (evaluate env (slot-value expr 'syntax:right))))))
 
 (defmethod evaluate ((env env:environment) (expr syntax:grouping))
   (evaluate env (slot-value expr 'syntax:expression)))

@@ -3,7 +3,7 @@
                              "queues" "log4cl" "array-operations"
                              "alexandria" "defclass-std" "iterate"
                              "unix-opts" "defenum" "closer-mop"
-                             "defstar" "str")
+                             "defstar" "str" "rutils")
   ;;:serial t
   :components (;; Utils (can be moved to external libraries)
                (:file "helpers/checked-class")

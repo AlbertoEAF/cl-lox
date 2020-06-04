@@ -2,9 +2,9 @@
   (:use :cl :lox.token :defclass-std :defclass+)
   (:export
    ;; Syntax types
-   :expr :binary :grouping :literal :unary :var
+   :expr :binary :grouping :literal :unary :var :logical
    ;; Constructors
-   :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign
+   :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign :make-logical
    ;; Accessors
    :left :right :operator :expression :value :assign :name))
 (in-package :lox.syntax.expr)
@@ -35,6 +35,11 @@
 (defclass+ var (expr)
   ((name :type token)))
 
+(defclass+ logical (expr)
+  ((left :type expr)
+   (operator :type token)
+   (right :type expr)))
+
 (defun make-assign (name value)
   (make-instance 'assign :name name :value value))
 
@@ -52,6 +57,9 @@
 
 (defun make-var (name)
   (make-instance 'var :name name))
+
+(defun make-logical (left operator right)
+  (make-instance 'logical :left left :operator operator :right right))
 
 (defun get-slot-names (clos-obj)
   (mapcar #'sb-mop:slot-definition-name
