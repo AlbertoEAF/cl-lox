@@ -168,6 +168,11 @@ Compared to the book:
       (env:define env (token:get-lexeme @stmt.name) value)
       nil)))
 
+(defmethod execute ((env env:environment) (stmt syntax:stmt-while))
+  (loop while (eval-truthy-p (evaluate env @stmt.condition))
+        do (execute env @stmt.body))
+  nil)
+
 (defun* execute-block ((statements list) (new-env env:environment))
   (loop for statement in statements do (execute new-env statement)))
 

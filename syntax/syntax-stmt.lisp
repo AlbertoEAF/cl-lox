@@ -9,7 +9,8 @@
    :stmt-print
    :stmt-var-declaration
    :stmt-block
-   :stmt-if))
+   :stmt-if
+   :stmt-while))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -33,3 +34,7 @@
   ((condition :type lox.syntax.expr:expr)
    (then-branch :type stmt)
    (else-branch :type (or null stmt))))
+
+(defclass+ stmt-while (stmt)
+  ((condition :type lox.syntax.expr:expr)
+   (body :type stmt)))

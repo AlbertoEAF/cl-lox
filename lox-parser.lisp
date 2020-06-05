@@ -103,11 +103,13 @@
   (assignment parser))
 
 (defun* statement ((parser parser))
-  (cond ((match parser 'tok-type:PRINT) (print-statement parser))
-        ((match parser 'tok-type:LEFT_BRACE) (make-instance 'lox.syntax.stmt:stmt-block
-                                                            :statements (lox-block parser)))
-        ((match parser 'tok-type:IF) (if-statement parser))
-        (t (expression-statement parser))))
+  (with-curry (match) parser
+    (cond ((match 'tok-type:PRINT) (print-statement parser))
+          ((match 'tok-type:LEFT_BRACE) (make-instance 'lox.syntax.stmt:stmt-block
+                                                              :statements (lox-block parser)))
+          ((match 'tok-type:IF) (if-statement parser))
+          ((match 'tok-type:WHILE) (while-statement parser))
+          (t (expression-statement parser)))))
 
 (defun* lox-declaration ((parser parser))
   (handler-case
@@ -116,6 +118,14 @@
     (lox-parse-error ()
       (synchronize parser)
       nil)))
+
+(defun* while-statement ((parser parser))
+  (consume parser 'tok-type:LEFT_PAREN "Expect '(' after 'while'.")
+  (let ((condition (expression parser)))
+    (consume parser 'tok-type:RIGHT_PAREN "Expect ')' after condition.")
+    (let ((body (statement parser)))
+      (make-instance 'syntax:stmt-while :condition condition
+                                        :body body))))
 
 (defun* print-statement ((parser parser))
   (let ((expr (expression parser)))
