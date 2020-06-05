@@ -103,15 +103,46 @@
   (assignment parser))
 
 (defun* statement ((parser parser))
+  "Parses a lox statement."
   (with-curry (match) parser
-    (cond ((match 'tok-type:PRINT) (print-statement parser))
-          ((match 'tok-type:LEFT_BRACE) (make-instance 'lox.syntax.stmt:stmt-block
-                                                              :statements (lox-block parser)))
-          ((match 'tok-type:IF) (if-statement parser))
-          ((match 'tok-type:WHILE) (while-statement parser))
-          (t (expression-statement parser)))))
+    (cond
+      ((match 'tok-type:FOR) (for-statement parser))
+      ((match 'tok-type:PRINT) (print-statement parser))
+      ((match 'tok-type:LEFT_BRACE) (syntax:make-stmt-block (lox-block parser)))
+      ((match 'tok-type:IF) (if-statement parser))
+      ((match 'tok-type:WHILE) (while-statement parser))
+      (t (expression-statement parser)))))
+
+(defun* for-statement ((parser parser))
+  "Desugaring - translates to a while block."
+  ;; Parsing for statement
+  (with-curry (match consume check) parser
+    (consume 'tok-type:LEFT_PAREN "Expect '(' after 'for'.")
+    (let* ((initializer (cond ((match 'tok-type:SEMICOLON) nil)
+                              ((match 'tok-type:VAR) (var-declaration parser))
+                              (t (expression-statement parser))))
+           (condition (prog1 (if (check 'tok-type:SEMICOLON) nil (expression parser))
+                        (consume 'tok-type:SEMICOLON "Expect ';' after for loop condition.")))
+           (increment (prog1 (if (check 'tok-type:RIGHT_PAREN) nil (expression parser))
+                        (consume 'tok-type:RIGHT_PAREN "Expect ')'. after for clauses.")))
+           (body (statement parser)))
+      ;; Desugaring into an initialization block with a while body.
+      ;; We start from the inner (last) forms:
+      (when increment
+        (setf body (syntax:make-stmt-block
+                    (list body
+                          (syntax:make-stmt-expression increment)))))
+      (setf body (syntax:make-stmt-while (or condition (syntax:make-literal :t))
+                                         body))
+      (when initializer
+        (setf body (syntax:make-stmt-block (list initializer body))))
+      body)))
+
+
 
 (defun* lox-declaration ((parser parser))
+  "Parses the meta-statement var declaration in lox.
+   It's not really a statement but a 'super' statement. It has to be parsed before regular statements."
   (handler-case
       (if (match parser 'tok-type:VAR) (var-declaration parser)
           (statement parser))
@@ -149,6 +180,7 @@
 
 
 (defun* expression-statement ((parser parser))
+  "An expression followed by ';'"
   (let* ((expr (expression parser)))
     (consume parser 'tok-type:SEMICOLON "Expect ';' after value.")
     (make-instance 'lox.syntax:stmt-expression
@@ -166,24 +198,23 @@
     expr))
 
 (defun* lox-or ((parser parser))
-  (let ((expr (lox-and parser)))
+  (let-return (expr (lox-and parser))
     (loop while (match parser 'tok-type:OR)
           do
              (let* ((operator (previous parser))
                     (right (lox-and parser)))
-               (setf expr (syntax:make-logical expr operator right))))
-    expr))
+               (setf expr (syntax:make-logical expr operator right))))))
 
 (defun* lox-and ((parser parser))
-  (let ((expr (equality parser)))
+  (let-return (expr (equality parser))
     (loop while (match parser 'tok-type:AND)
           do
              (let* ((operator (previous parser))
                     (right (equality parser)))
-               (setf expr (syntax:make-logical expr operator right))))
-    expr))
+               (setf expr (syntax:make-logical expr operator right))))))
 
 (defun* var-declaration ((parser parser))
+  "Parse a var declaration statement in lox. Expects a finishing ';'."
   (let ((name (consume parser 'tok-type:IDENTIFIER "Expect variable name."))
         (initializer (if (match parser 'tok-type:EQUAL) (expression parser)
                          (syntax:make-literal :lox-unitialized-var))))
@@ -205,25 +236,23 @@
                                        (match-operator-tokens list))
   "Parses a binary expression of the form:
     <parse-fn parser> (<operator in match-operator-tokens> <parse-fn parser>)*"
-  (let ((expr (funcall parse-fn parser)))
+  (let-return (expr (funcall parse-fn parser))
     (loop while (match-list parser match-operator-tokens)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
-                                            (funcall parse-fn parser))))
-    expr))
+                                            (funcall parse-fn parser))))))
 
 (defun* equality ((parser parser))
-  (let ((expr (comparison parser)))
+  (let-return (expr (comparison parser))
     (loop while (match parser 'tok-type:BANG_EQUAL 'tok-type:EQUAL_EQUAL)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
-                                            (comparison parser))))
-    expr))
+                                            (comparison parser))))))
 
 (defun* comparison ((parser parser))
-  (let ((expr (addition parser)))
+  (let-return (expr (addition parser))
     (loop while (match parser
                   'tok-type:GREATER
                   'tok-type:GREATER_EQUAL
@@ -232,26 +261,23 @@
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
-                                            (addition parser))))
-    expr))
+                                            (addition parser))))))
 
 (defun* addition ((parser parser))
-  (let ((expr (multiplication parser)))
+  (let-return (expr (multiplication parser))
     (loop while (match parser 'tok-type:MINUS 'tok-type:PLUS)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
-                                            (multiplication parser))))
-    expr))
+                                            (multiplication parser))))))
 
 (defun* multiplication ((parser parser))
-  (let ((expr (unary parser)))
+  (let-return (expr (unary parser))
     (loop while (match parser 'tok-type:STAR 'tok-type:SLASH)
           do
              (setf expr (syntax:make-binary expr
                                             (previous parser)
-                                            (unary parser))))
-    expr))
+                                            (unary parser))))))
 
 (defun* unary ((parser parser))
   (if (match parser 'tok-type:BANG 'tok-type:MINUS) (syntax:make-unary (previous parser)
@@ -278,9 +304,8 @@
 
 
 (defun* parse ((parser parser))
-  (handler-case
-      (loop while (not (at-end-p parser))
-            collect (lox-declaration parser))))
+  (loop while (not (at-end-p parser))
+        collect (lox-declaration parser)))
 
 
 

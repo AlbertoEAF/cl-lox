@@ -1,0 +1,42 @@
+/*
+ For loop demo:
+  - For loop introduces a local scope
+    - This means variables in it won't disturb those outside.
+*/
+
+var i = 42; // lets leave this untouched.
+var n =  6; // lets modify this one in the loop.
+
+
+// Lets loop reusing the variable n
+
+print "Before loop with local variables:";
+print "n=" + n + " i="+i;
+
+print "At loop with local variables:";
+// Loop with local variables:
+for (var n = 10; n > 0; n = n-1) {
+  var i = 10*n;
+  print "n=" + n + " i="+i;
+}
+
+print "After loop with 'n':";
+print "n=" + n + " i="+i;
+
+
+
+// Lets introduce variables in the loop so outside variables are not modified:
+
+print "Now lets modify the global variables:";
+
+print "Before loop:";
+print "n="+n + " i="+i;
+
+print "At loop with global variables:";
+for (n = 10; n > 0; n = n-1) {
+  print "n="+n + " i="+i;
+  i = i+1;
+}
+
+print "After loop with 'n':";
+print "n="+n + " i="+i;

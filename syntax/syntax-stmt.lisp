@@ -10,7 +10,11 @@
    :stmt-var-declaration
    :stmt-block
    :stmt-if
-   :stmt-while))
+   :stmt-while
+   ;; Constructors
+   :make-stmt-expression
+   :make-stmt-block
+   :make-stmt-while))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -38,3 +42,12 @@
 (defclass+ stmt-while (stmt)
   ((condition :type lox.syntax.expr:expr)
    (body :type stmt)))
+
+(defun make-stmt-expression (expression)
+  (make-instance 'stmt-expression :expression expression))
+
+(defun make-stmt-block (statements)
+  (make-instance 'stmt-block :statements statements))
+
+(defun make-stmt-while (condition body)
+  (make-instance 'stmt-while :condition condition :body body))

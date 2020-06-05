@@ -1,6 +1,9 @@
 (defpackage :cl-extensions
   (:use :cl)
-  (:export :with-curry)
+  (:export
+   :with-curry
+   :let-return-it
+   :let-return)
   (:local-nicknames (#:a #:alexandria)))
 (in-package :cl-extensions)
 
@@ -20,3 +23,14 @@
               `(flet ,flets
                  (declare (inline ,@fn-specs))
                  ,@body))))
+
+
+(defmacro let-return-it (it-initform &body body)
+  `(let ((it ,it-initform))
+     ,@body
+     it))
+
+(defmacro let-return ((it it-initform) &body body)
+  `(let ((,it ,it-initform))
+     ,@body
+     ,it))
