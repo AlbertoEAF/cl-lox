@@ -15,6 +15,7 @@
               :initform nil)))
 
 (defun make-environment (&optional enclosing)
+  (declare (type (or null environment) enclosing))
   (make-instance 'environment :enclosing enclosing))
 
 (defun* define ((env environment) (name string) value)

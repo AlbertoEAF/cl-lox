@@ -20,8 +20,12 @@
                (:file "syntax/pprint" :depends-on ("syntax/syntax"))
                (:file "environment" :depends-on ("lox-error"))
                (:file "lox-parser" :depends-on ("syntax/syntax" "lox-error"))
-               (:file "lox-callable" :depends-on ("environment"))
-               (:file "interpreter" :depends-on ("lox-parser" "environment" "lox-callable"))
+               (:file "interpreter-def" :depends-on ("environment" "lox-error"))
+               (:file "lox-callable" :depends-on ("interpreter-def" "environment"))
+               (:file "lox-function-def" :depends-on ("lox-callable"))
+               (:file "interpreter-build" :depends-on ("lox-callable" "interpreter-def" "lox-function-def"))
+               (:file "lox-function" :depends-on ("lox-function-def" "interpreter-build"))
+               (:file "interpreter" :depends-on ("lox-parser" "environment" "lox-callable" "lox-function" "interpreter-def"))
                (:file "lox" :depends-on ("interpreter"))))
 
 ;; (defsystem "aoc19/tests"

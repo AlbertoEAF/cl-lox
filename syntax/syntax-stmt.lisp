@@ -11,10 +11,12 @@
    :stmt-block
    :stmt-if
    :stmt-while
+   :stmt-function
    ;; Constructors
    :make-stmt-expression
    :make-stmt-block
-   :make-stmt-while))
+   :make-stmt-while
+   :make-stmt-function))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -43,4 +45,7 @@
   ((condition :type lox.syntax.expr:expr)
    (body :type stmt)))
 
-
+(defclass++ stmt-function (stmt)
+  ((name :type lox.token:token)
+   (params :type list)
+   (body :type list)))

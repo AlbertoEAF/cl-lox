@@ -1,5 +1,5 @@
 (defpackage :lox.interpreter
-  (:use :cl :defstar :defclass+)
+  (:use :cl :defstar :defclass+ :lox.interpreter.def :lox.interpreter.build)
   (:export :interpret :make-interpreter)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
@@ -9,35 +9,13 @@
 
 (named-readtables:in-readtable rutils:rutils-readtable)
 
+
+
 #|
 Compared to the book:
  - visit<X>Expr() -> evaluate call
  - visit<X>Stmt() -> execute call
 |#
-
-(defclass+ interpreter ()
-  ((globals :type env:environment)
-   (environment :type env:environment)))
-
-(defun make-interpreter ()
-  (let* ((globals (env:make-environment))
-         (environment (env:make-environment globals)))
-    (flet ((define-global-function (name fn &optional (repr "<native fn>"))
-             "Helper to define global a function."
-             (env:define globals name
-               (lox.callable:make-lox-function
-                name (length (trivial-arguments:arglist fn)) fn repr))))
-      (define-global-function "clock" (lambda () (get-universal-time)))
-      (define-global-function "readfile" (lambda (fpath) (uiop:read-file-string fpath)))
-      (define-global-function "readline" (lambda () (read-line))))
-    (make-instance 'interpreter :globals globals :environment environment)))
-
-
-(defgeneric evaluate (env expr)
-  (:documentation "For expressions. Equivalent to lox's visit<X>Expr."))
-
-(defgeneric execute (env stmt)
-  (:documentation "For statements. Equivalent to lox's visit<X>Stmt"))
 
 (defun truthy-p (expr)
   (case expr
@@ -72,25 +50,25 @@ Compared to the book:
     (error 'lox.error:lox-runtime-error :token operator :message "Operands must be numbers.")))
 
 
-(defmethod evaluate ((env env:environment) (expr syntax:expr))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:expr))
   expr)
 
-(defmethod evaluate ((env env:environment) (expr syntax:literal))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:literal))
   @expr.value)
 
-(defmethod evaluate ((env env:environment) (expr syntax:logical))
-  (let ((left (evaluate env @expr.left)))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:logical))
+  (let ((left (evaluate interpreter @expr.left)))
     (cond ((eq 'tok-type:OR
                (token:get-token-type @expr.operator))
            (if (eval-truthy-p left) left))
           ((not (eval-truthy-p left)) left)
-          (t (evaluate env @expr.right)))))
+          (t (evaluate interpreter @expr.right)))))
 
-(defmethod evaluate ((env env:environment) (expr syntax:grouping))
-  (evaluate env @expr.expression))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:grouping))
+  (evaluate interpreter @expr.expression))
 
-(defmethod evaluate ((env env:environment) (expr syntax:unary))
-  (let ((right (evaluate env @expr.right))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:unary))
+  (let ((right (evaluate interpreter @expr.right))
         (operator-token-type (token:get-token-type @expr.operator)))
     (cond ((eql 'tok-type:MINUS operator-token-type)
            (- right))
@@ -113,9 +91,9 @@ Compared to the book:
           ((typep obj 'number) (lox-number-string-repr obj))
           (t (format nil "~S" obj)))))
 
-(defmethod evaluate ((env env:environment) (expr syntax:binary))
-  (let* ((left (evaluate env  @expr.left))
-         (right (evaluate env @expr.right))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:binary))
+  (let* ((left (evaluate interpreter  @expr.left))
+         (right (evaluate interpreter @expr.right))
          (operator @expr.operator)
          (operator-token-type (token:get-token-type operator))
          (simple-op (case operator-token-type
@@ -149,79 +127,79 @@ Compared to the book:
           (tok-type::BANG_EQUAL (not (is-equal left right)))
           (tok-type::EQUAL_EQUAL (is-equal left right))))))
 
-(defmethod evaluate ((env env:environment) (expr syntax:call))
-  (let ((callee (evaluate env @expr.callee))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:call))
+  (let ((callee (evaluate interpreter @expr.callee))
         (arguments (loop for argument in @expr.arguments
-                         collect (evaluate env argument))))
+                         collect (evaluate interpreter argument))))
     (if (not (typep callee 'lox.callable:lox-callable))
         (error 'lox.error:lox-runtime-error
                :token @expr.paren
                :message "Can only call functions and classes."))
-    (let ((lox-function callee))
-      (if (/= (length arguments) (lox.callable:lox-callable-arity lox-function))
-          (error 'lox.error:lox-runtime-error
-                 :token @expr.paren
-                 :message (format nil "Expected ~A arguments but got ~A."
-                                  (lox.callable:lox-callable-arity lox-function)
-                                  (length arguments))))
-      (lox.callable:lox-call lox-function env arguments))))
+    (if (/= (length arguments) (lox.callable:lox-callable-arity callee))
+        (error 'lox.error:lox-runtime-error
+               :token @expr.paren
+               :message (format nil "Expected ~A arguments but got ~A."
+                                (lox.callable:lox-callable-arity callee)
+                                (length arguments))))
+    (lox.callable:lox-call callee interpreter arguments)))
 
-;; (defmethod find-lox-function ((env env:environment) callee)
-;;   (let ((lox-function (env:get-value env callee)))))
-
-(defmethod evaluate ((env env:environment) (expr syntax:var))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:var))
   (let* ((name @expr.name)
-         (value (env:get-value env name)))
+         (value (env:get-value @interpreter.environment name)))
     (if (eq value :lox-unitialized-var) (error 'lox.error:lox-runtime-error
                                                :token name
                                                :message (format nil "Unitialized variable '~A'."
                                                                 (token:get-lexeme name)))
         value)))
 
-(defmethod evaluate ((env env:environment) (expr syntax:assign))
+(defmethod evaluate ((interpreter interpreter) (expr syntax:assign))
   (let* ((name @expr.name)
-         (value (evaluate env @expr.value)))
-    (env:assign env name value)))
+         (value (evaluate interpreter @expr.value)))
+    (env:assign @interpreter.environment name value)))
 
-(defmethod execute ((env env:environment) (stmt syntax:stmt-expression))
-  (evaluate env @stmt.expression)
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-expression))
+  (evaluate interpreter @stmt.expression)
   nil)
 
-(defmethod execute ((env env:environment) (stmt syntax:stmt-print))
-  (format t "~A~%" (stringify (evaluate env @stmt.expression)))
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
+  (let ((fn (lox.function:make-lox-function stmt)))
+    (env:define @interpreter.environment @stmt.name.lexeme fn)))
+
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-print))
+  (format t "~A~%" (stringify (evaluate interpreter @stmt.expression)))
   nil)
 
-(defmethod execute ((env env:environment) (stmt syntax:stmt-var-declaration))
-  (with-slots (lox.syntax.stmt::name lox.syntax.stmt::initializer) stmt
-    (let ((value (if @stmt.initializer (evaluate env @stmt.initializer))))
-      (env:define env (token:get-lexeme @stmt.name) value)
-      nil)))
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-var-declaration))
+  (let ((value (if @stmt.initializer (evaluate interpreter @stmt.initializer))))
+    (env:define @interpreter.environment (token:get-lexeme @stmt.name) value)
+    nil))
 
-(defmethod execute ((env env:environment) (stmt syntax:stmt-while))
-  (loop while (eval-truthy-p (evaluate env @stmt.condition))
-        do (execute env @stmt.body))
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-while))
+  (loop while (eval-truthy-p (evaluate interpreter @stmt.condition))
+        do (execute interpreter @stmt.body))
   nil)
 
-(defun* execute-block ((statements list) (new-env env:environment))
-  (loop for statement in statements do (execute new-env statement)))
-
-(defmethod execute ((current-env env:environment) (stmt lox.syntax.stmt:stmt-block))
+(defmethod execute ((interpreter interpreter) (stmt lox.syntax.stmt:stmt-block))
   (execute-block @stmt.statements
-                 (env:make-environment current-env))
+                 (make-proxy-env-interpreter interpreter))
   nil)
 
-(defmethod execute ((env env:environment) (if-stmt syntax:stmt-if))
-  (cond ((eq :t (truthy-p (evaluate env @if-stmt.condition))) (execute env @if-stmt.then-branch))
-        (@if-stmt.else-branch (execute env @if-stmt.else-branch)))
+(defmethod execute ((interpreter interpreter) (if-stmt syntax:stmt-if))
+  (cond ((eval-truthy-p (evaluate interpreter @if-stmt.condition))
+         (execute interpreter @if-stmt.then-branch))
+        (@if-stmt.else-branch
+         (execute interpreter @if-stmt.else-branch)))
   nil)
 
-(defmethod execute ((env env:environment) (stmt syntax:stmt))
-  (execute stmt))
+
+
+;; (defmethod execute ((interpreter interpreter) (stmt syntax:stmt))
+;;    (execute stmt))
 
 (defun* interpret ((interpreter interpreter) (statements list))
   (handler-case
       (loop for stmt in statements
-            do (execute @interpreter.environment stmt))
+            do (execute interpreter stmt))
     (lox.error:lox-runtime-error (e)
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
