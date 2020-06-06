@@ -2,9 +2,9 @@
   (:use :cl :lox.token :defclass-std :defclass+)
   (:export
    ;; Syntax types
-   :expr :binary :grouping :literal :unary :var :logical
+   :expr :binary :grouping :literal :unary :var :logical :call
    ;; Constructors
-   :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign :make-logical
+   :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign :make-logical :make-call
    ;; Accessors
    :left :right :operator :expression :value :assign :name))
 (in-package :lox.syntax.expr)
@@ -13,53 +13,38 @@
 (defclass expr ()
   ())
 
-(defclass+ assign (expr)
+(defclass++ assign (expr)
   ((name :type token)
    (value :type expr)))
 
-(defclass+ binary (expr)
+(defclass++ binary (expr)
   ((left :type expr)
    (operator :type token)
    (right :type expr)))
 
-(defclass+ grouping (expr)
+(defclass++ grouping (expr)
   ((expression :type expr)))
 
-(defclass+ literal (expr)
+(defclass++ literal (expr)
   ((value)))
 
-(defclass+ unary (expr)
+(defclass++ unary (expr)
   ((operator :type token)
    (right :type expr)))
 
-(defclass+ var (expr)
+(defclass++ var (expr)
   ((name :type token)))
 
-(defclass+ logical (expr)
+(defclass++ logical (expr)
   ((left :type expr)
    (operator :type token)
    (right :type expr)))
 
-(defun make-assign (name value)
-  (make-instance 'assign :name name :value value))
+(defclass++ call (expr)
+  ((callee :type expr)
+   (paren :type token)
+   (arguments :type list)))
 
-(defun make-binary (left operator right)
-  (make-instance 'binary :left left :operator operator :right right))
-
-(defun make-literal (value)
-  (make-instance 'literal :value value))
-
-(defun make-grouping (expression)
-  (make-instance 'grouping :expression expression))
-
-(defun make-unary (operator right)
-  (make-instance 'unary :operator operator :right right))
-
-(defun make-var (name)
-  (make-instance 'var :name name))
-
-(defun make-logical (left operator right)
-  (make-instance 'logical :left left :operator operator :right right))
 
 (defun get-slot-names (clos-obj)
   (mapcar #'sb-mop:slot-definition-name

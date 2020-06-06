@@ -20,7 +20,7 @@
 (defclass+ stmt ()
   ())
 
-(defclass+ stmt-expression (stmt)
+(defclass++ stmt-expression (stmt)
   ((expression :type lox.syntax.expr:expr)))
 
 (defclass+ stmt-print (stmt)
@@ -30,7 +30,7 @@
   ((name :type lox.token:token)
    (initializer :type (or null lox.syntax.expr:expr))))
 
-(defclass+ stmt-block (stmt)
+(defclass++ stmt-block (stmt)
   ;; Probably could add checking of individual items at introduction (list stmt*)
   ((statements :type list)))
 
@@ -39,15 +39,8 @@
    (then-branch :type stmt)
    (else-branch :type (or null stmt))))
 
-(defclass+ stmt-while (stmt)
+(defclass++ stmt-while (stmt)
   ((condition :type lox.syntax.expr:expr)
    (body :type stmt)))
 
-(defun make-stmt-expression (expression)
-  (make-instance 'stmt-expression :expression expression))
 
-(defun make-stmt-block (statements)
-  (make-instance 'stmt-block :statements statements))
-
-(defun make-stmt-while (condition body)
-  (make-instance 'stmt-while :condition condition :body body))

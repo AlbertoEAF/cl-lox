@@ -97,6 +97,10 @@
                                   tok-type:RETURN))))
         do (advance parser)))
 
+(defmacro with-parser (parser &body body)
+  `(with-curry (match check advance at-end-p peek previous consume synchronize) ,parser
+     ,@body))
+
 ;;; LANGUAGE implementation
 
 (defun* expression ((parser parser))
@@ -282,7 +286,27 @@
 (defun* unary ((parser parser))
   (if (match parser 'tok-type:BANG 'tok-type:MINUS) (syntax:make-unary (previous parser)
                                                                        (unary parser))
-      (primary parser)))
+      (lox-call parser)))
+
+(defun* lox-call ((parser parser))
+  (let-return (expr (primary parser))
+    (loop while (match parser 'tok-type:LEFT_PAREN)
+          do (setf expr (finish-lox-call parser expr)))))
+
+(defun* finish-lox-call ((parser parser) (callee syntax:expr))
+  (let ((arguments))
+    (when (not (check parser 'tok-type:RIGHT_PAREN))
+      (loop
+        for args-count below 256
+        do (push (expression parser) arguments)
+        while (match parser 'tok-type:COMMA)
+        finally
+           ;; For behaviour compatibility with the lox implementation in C:
+           (if (>= args-count 255)
+               ;; TODO: Shouldn't throw. Only report:
+               (error (make-lox-parse-error (peek parser) "Cannot have more than 255 arguments.")))))
+    (let ((paren (consume parser 'tok-type:RIGHT_PAREN "Expect ')' after arguments.")))
+      (syntax:make-call callee paren (nreverse arguments)))))
 
 (defun* primary ((parser parser))
   (with-curry (match previous) parser

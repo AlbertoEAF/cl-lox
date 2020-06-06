@@ -16,11 +16,20 @@ Compared to the book:
 |#
 
 (defclass+ interpreter ()
-  ((environment :type env:environment
-                :initform (env:make-environment))))
+  ((globals :type env:environment)
+   (environment :type env:environment)))
 
 (defun make-interpreter ()
-  (make-instance 'interpreter))
+  (let* ((globals (env:make-environment))
+         (environment (env:make-environment globals)))
+    (flet ((define-global-function (name fn &optional (repr "<native fn>"))
+             "Helper to define global a function."
+             (env:define globals name
+               (lox.callable:make-lox-function
+                name (length (trivial-arguments:arglist fn)) fn repr))))
+      (define-global-function "clock" (lambda () (get-universal-time)))
+      (define-global-function "readfile" (lambda (fpath) (uiop:read-file-string fpath))))
+    (make-instance 'interpreter :globals globals :environment environment)))
 
 
 (defgeneric evaluate (env expr)
@@ -139,6 +148,25 @@ Compared to the book:
           (tok-type::BANG_EQUAL (not (is-equal left right)))
           (tok-type::EQUAL_EQUAL (is-equal left right))))))
 
+(defmethod evaluate ((env env:environment) (expr syntax:call))
+  (let ((callee (evaluate env @expr.callee))
+        (arguments (loop for argument in @expr.arguments
+                         collect (evaluate env argument))))
+    (if (not (typep callee 'lox.callable:lox-callable))
+        (error 'lox.error:lox-runtime-error
+               :token @expr.paren
+               :message "Can only call functions and classes."))
+    (let ((lox-function callee))
+      (if (/= (length arguments) (lox.callable:lox-callable-arity lox-function))
+          (error 'lox.error:lox-runtime-error
+                 :token @expr.paren
+                 :message (format nil "Expected ~A arguments but got ~A."
+                                  (lox.callable:lox-callable-arity lox-function)
+                                  (length arguments))))
+      (lox.callable:lox-call lox-function env arguments))))
+
+;; (defmethod find-lox-function ((env env:environment) callee)
+;;   (let ((lox-function (env:get-value env callee)))))
 
 (defmethod evaluate ((env env:environment) (expr syntax:var))
   (let* ((name @expr.name)
