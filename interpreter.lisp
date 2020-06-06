@@ -28,7 +28,8 @@ Compared to the book:
                (lox.callable:make-lox-function
                 name (length (trivial-arguments:arglist fn)) fn repr))))
       (define-global-function "clock" (lambda () (get-universal-time)))
-      (define-global-function "readfile" (lambda (fpath) (uiop:read-file-string fpath))))
+      (define-global-function "readfile" (lambda (fpath) (uiop:read-file-string fpath)))
+      (define-global-function "readline" (lambda () (read-line))))
     (make-instance 'interpreter :globals globals :environment environment)))
 
 
