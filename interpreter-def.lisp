@@ -1,6 +1,10 @@
 (defpackage :lox.interpreter.def
-  (:use :cl :defstar :defclass+ :lox.error)
-  (:export :interpreter :evaluate :execute :execute-block :lox-return :make-lox-return)
+  (:use :cl :lox-cl :lox.error)
+  (:import-from :lox.environment "ENVIRONMENT")
+  (:export
+   :interpreter :environment :globals
+   :evaluate :execute :execute-block
+   :lox-return :make-lox-return)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
                     (#:tok-type #:lox.token.types)
@@ -16,8 +20,10 @@ Compared to the book:
 |#
 
 (defclass+ interpreter ()
-  ((globals :type env:environment)
-   (environment :type env:environment)))
+  ((globals :type env:environment
+            :reader globals)
+   (environment :type env:environment
+                :reader environment)))
 
 (defgeneric evaluate (interpreter expr)
   (:documentation "For expressions. Equivalent to lox's visit<X>Expr."))
@@ -28,10 +34,11 @@ Compared to the book:
 (defun* execute-block ((statements list) (interpreter interpreter))
   (loop for statement in statements do (execute interpreter statement)))
 
-
-(define-condition lox-return (lox-runtime-error)
+(define-condition lox-return (error)
   ((value :initform nil
-          :initarg :value)))
+          :initarg :value))
+  (:documentation "Signal that carries the return value information."))
 
 (defun make-lox-return (value)
+  "Creates a lox-return condition that transports a value."
   (make-condition 'lox-return :value value))

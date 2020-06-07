@@ -163,11 +163,18 @@ Compared to the book:
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
   (let ((fn (lox.function:make-lox-function stmt)))
-    (env:define @interpreter.environment @stmt.name.lexeme fn)))
+    (env:define @interpreter.environment @stmt.name.lexeme fn))
+  nil)
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-print))
   (format t "~A~%" (stringify (evaluate interpreter @stmt.expression)))
   nil)
+
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-return))
+  (let ((value (if @stmt.value (evaluate interpreter @stmt.value))))
+    ;; Signal with a lox-return "error" that carries the value.
+    (error (make-lox-return value))))
+
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-var-declaration))
   (let ((value (if @stmt.initializer (evaluate interpreter @stmt.initializer))))

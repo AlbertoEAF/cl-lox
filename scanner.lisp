@@ -3,11 +3,12 @@
         :lox.token) ;; *TODO* use local nickname!
   (:export :scanner :make-scanner :scan-tokens)
   (:local-nicknames (#:token #:lox.token)
-                    (#:tok-type #:lox.token.types)))
+                    (#:tok-type #:lox.token.types)
+                    (#:ℵ #:lox.token.types)))
 (in-package :lox.scanner)
 
 
-(defvar *keywords* '(tok-type:AND tok-type:CLASS tok-type:ELSE tok-type:FALSE tok-type:FOR tok-type:FUN tok-type:IF tok-type:NIL tok-type:OR tok-type:PRINT tok-type:RETURN tok-type:SUPER tok-type:THIS tok-type:TRUE tok-type:VAR tok-type:WHILE))
+(defvar *keywords* '(ℵ:AND ℵ:CLASS ℵ:ELSE ℵ:FALSE ℵ:FOR ℵ:FUN ℵ:IF ℵ:NIL ℵ:OR ℵ:PRINT ℵ:RETURN ℵ:SUPER ℵ:THIS ℵ:TRUE ℵ:VAR ℵ:WHILE))
 
 (locally (declare (optimize safety))
   (defclass scanner ()
@@ -50,7 +51,7 @@
           do
              (setf start current)
              (scan-token scanner))
-    (push (make-token 'tok-type:EOF "" nil line) tokens)
+    (push (make-token 'ℵ:EOF "" nil line) tokens)
     (setf tokens (reverse tokens))
     tokens))
 
@@ -60,26 +61,26 @@
            (token-candidate
              (case c
                ;; 1-character cases
-               (#\( 'tok-type:LEFT_PAREN)
-               (#\) 'tok-type:RIGHT_PAREN)
-               (#\{ 'tok-type:LEFT_BRACE)
-               (#\} 'tok-type:RIGHT_BRACE)
-               (#\, 'tok-type:COMMA)
-               (#\. 'tok-type:DOT)
-               (#\- 'tok-type:MINUS)
-               (#\+ 'tok-type:PLUS)
-               (#\; 'tok-type:SEMICOLON)
-               (#\* 'tok-type:STAR)
+               (#\( 'ℵ:LEFT_PAREN)
+               (#\) 'ℵ:RIGHT_PAREN)
+               (#\{ 'ℵ:LEFT_BRACE)
+               (#\} 'ℵ:RIGHT_BRACE)
+               (#\, 'ℵ:COMMA)
+               (#\. 'ℵ:DOT)
+               (#\- 'ℵ:MINUS)
+               (#\+ 'ℵ:PLUS)
+               (#\; 'ℵ:SEMICOLON)
+               (#\* 'ℵ:STAR)
                ;; 2-character cases
-               (#\! (if (match #\=) 'tok-type:BANG_EQUAL 'tok-type:BANG))
-               (#\= (if (match #\=) 'tok-type:EQUAL_EQUAL 'tok-type:EQUAL))
-               (#\< (if (match #\=) 'tok-type:LESS_EQUAL 'tok-type:LESS))
-               (#\> (if (match #\=) 'tok-type:GREATER_EQUAL 'tok-type:GREATER))
+               (#\! (if (match #\=) 'ℵ:BANG_EQUAL 'ℵ:BANG))
+               (#\= (if (match #\=) 'ℵ:EQUAL_EQUAL 'ℵ:EQUAL))
+               (#\< (if (match #\=) 'ℵ:LESS_EQUAL 'ℵ:LESS))
+               (#\> (if (match #\=) 'ℵ:GREATER_EQUAL 'ℵ:GREATER))
                ;; exception: / -- can also be a comment
                (#\/
                 (cond ((match #\/) (simple-comment-parser scanner))
                       ((match #\*) (nested-comment-parser scanner))
-                      (t 'tok-type:SLASH)))
+                      (t 'ℵ:SLASH)))
                ;; Ignore whitespace
                ((#\Space #\Return #\Tab))
                (#\Newline (incf (line scanner)))
@@ -124,7 +125,7 @@
                       (start scanner)
                       (current scanner))))
     (add-token scanner (or (car (member text *keywords* :test #'string-equal))
-                           'tok-type:IDENTIFIER))))
+                           'ℵ:IDENTIFIER))))
 
 (defun* lox-number ((scanner scanner))
   (with-scanner-slots scanner
@@ -136,7 +137,7 @@
         (advance)
         (loop while (is-digit-p (peek))
               do (advance)))
-      (add-token 'tok-type:NUMBER
+      (add-token 'ℵ:NUMBER
                  (parse-number (subseq source
                                        start
                                        current))))))
@@ -154,9 +155,9 @@
         (lox.error::lox-error line "Unterminated string.")
         (return-from lox-string nil))
       (advance) ;; consume closing \"
-      (add-token 'tok-type:STRING (subseq source
-                                          (1+ start)
-                                          (1- current))))))
+      (add-token 'ℵ:STRING (subseq source
+                                   (1+ start)
+                                   (1- current))))))
 
 
 (defun* match ((scanner scanner) (expected standard-char))

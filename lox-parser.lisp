@@ -1,5 +1,5 @@
 (defpackage :lox.parser
-  (:use :cl :defclass+ :defstar :cl-extensions)
+  (:use :cl :lox-cl)
   (:export :make-parser :parse)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
@@ -113,6 +113,7 @@
     (cond
       ((match 'ℵ:FOR) (for-statement parser))
       ((match 'ℵ:PRINT) (print-statement parser))
+      ((match 'ℵ:RETURN) (return-statement parser))
       ((match 'ℵ:LEFT_BRACE) (syntax:make-stmt-block (lox-block parser)))
       ((match 'ℵ:IF) (if-statement parser))
       ((match 'ℵ:WHILE) (while-statement parser))
@@ -169,6 +170,12 @@
     (consume parser 'ℵ:SEMICOLON "Expect ';' after value.")
     (make-instance 'lox.syntax:stmt-print
                    :expression expr)))
+
+(defun* return-statement ((parser parser))
+  (let ((keyword (previous parser))
+        (value (if (not (check parser 'ℵ:SEMICOLON)) (expression parser))))
+    (consume parser 'ℵ:SEMICOLON "Expect ';' after return variable.")
+    (syntax:make-stmt-return keyword value)))
 
 (defun* if-statement ((parser parser))
   (with-curry (consume match expression statement) parser

@@ -12,11 +12,13 @@
    :stmt-if
    :stmt-while
    :stmt-function
+   :stmt-return
    ;; Constructors
    :make-stmt-expression
    :make-stmt-block
    :make-stmt-while
-   :make-stmt-function))
+   :make-stmt-function
+   :make-stmt-return))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -49,3 +51,7 @@
   ((name :type lox.token:token)
    (params :type list)
    (body :type list)))
+
+(defclass++ stmt-return (stmt)
+  ((keyword :type lox.token:token)
+   (value :type lox.syntax.expr:expr)))

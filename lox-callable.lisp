@@ -9,9 +9,11 @@
 
 (defclass lox-callable () ())
 
-(defgeneric lox-callable-arity (callee))
+(defgeneric lox-callable-arity (callee)
+  (:documentation "Returns the arity of the callable."))
 
-(defgeneric lox-call (callable interpreter arguments))
+(defgeneric lox-call (callable interpreter arguments)
+  (:documentation "Generic method to call the callable."))
 
 ;;; Lox native functions
 

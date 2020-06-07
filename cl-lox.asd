@@ -10,7 +10,8 @@
                (:file "helpers/defclass-plus" :depends-on ("helpers/checked-class"))
                (:file "helpers/cl-extensions")
                ;; Lox code
-               (:file "lox-token-types")
+               (:file "lox-cl" :depends-on ("helpers/cl-extensions" "helpers/defclass-plus"))
+               (:file "lox-token-types" :depends-on ("lox-cl"))
                (:file "lox-token" :depends-on ("lox-token-types"))
                (:file "lox-error" :depends-on ("lox-token"))
                (:file "scanner" :depends-on ("lox-token" "lox-error"))

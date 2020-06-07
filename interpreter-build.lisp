@@ -1,5 +1,5 @@
 (defpackage :lox.interpreter.build
-  (:use :cl :defstar :defclass+ :lox.interpreter.def)
+  (:use :cl :lox-cl :lox.interpreter.def)
   (:export :interpreter :make-interpreter :make-proxy-env-interpreter)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
@@ -24,7 +24,9 @@
     (make-instance 'interpreter :globals globals :environment environment)))
 
 (defun* make-proxy-env-interpreter ((interpreter interpreter) &optional new-env)
-  "Creates an interpreter whose environment is new and points to the input interpreter's environment."
-  (make-instance 'interpreter :globals @interpreter.globals
+  "Creates an interpreter whose environment is new and points to the input interpreter's environment.
+
+   It shares the globals environment with the input interpreter."
+  (make-instance 'interpreter :globals (globals interpreter)
                               :environment (or new-env
-                                               (env:make-environment @interpreter.environment))))
+                                               (env:make-environment (environment interpreter)))))
