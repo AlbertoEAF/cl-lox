@@ -1,6 +1,6 @@
 (defpackage :lox
   (:use :cl :defclass-std :lox.scanner :lox.parser :lox.pprint)
-  (:export :run :run-prompt :main))
+  (:export :run :run-prompt :run-file :main))
 (in-package :lox)
 (import 'unix-opts)
 
@@ -15,7 +15,7 @@
   (sb-ext:exit :code code))
 
 (defun read-multi-line ()
-  "Reads until a line is empty into a list."
+  "Reads a list of lines (strings) until a line is empty."
   (loop for line = (read-line)
         until (equal "" line)
         collect line))

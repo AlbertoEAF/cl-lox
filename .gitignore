@@ -1,2 +1,4 @@
 *~
 *.fasl
+/roswell/cl-lox
+/roswell/lixo

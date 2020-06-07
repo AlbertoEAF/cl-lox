@@ -123,7 +123,7 @@ Compared to the book:
                  (t
                   (error 'lox.error:lox-runtime-error
                          :token operator
-                         :message "Operators must be two numbers or two strings."))))
+                         :message "+ operands must be numbers or strings."))))
           (tok-type::BANG_EQUAL (not (is-equal left right)))
           (tok-type::EQUAL_EQUAL (is-equal left right))))))
 
