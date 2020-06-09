@@ -11,8 +11,7 @@
 
 
 (defun make-interpreter ()
-  (let* ((globals (env:make-environment))
-         (environment (env:make-environment globals)))
+  (let ((globals (env:make-environment)))
     (flet ((define-global-function (name fn &optional (repr (format nil "<native fn ~A>" name)))
              "Helper to define global a function."
              (env:define globals name
@@ -21,7 +20,7 @@
       (define-global-function "clock" (lambda () (get-universal-time)))
       (define-global-function "readfile" (lambda (fpath) (uiop:read-file-string fpath)))
       (define-global-function "readline" (lambda () (read-line))))
-    (make-instance 'interpreter :globals globals :environment environment)))
+    (make-instance 'interpreter :globals globals :environment globals)))
 
 (defun* make-proxy-env-interpreter ((interpreter interpreter) &optional new-env)
   "Creates an interpreter whose environment is new and points to the input interpreter's environment.

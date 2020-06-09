@@ -11,8 +11,9 @@
 (defmethod lox-call ((callee lox-function)
                      (interpreter ℑ.def:interpreter)
                      (arguments list))
-  (let ((call-scope-interpreter (ℑ.build:make-proxy-env-interpreter interpreter))
-        (declaration @callee.declaration))
+  (let* ((call-env (env:make-environment @callee.closure))
+         (call-scope-interpreter (ℑ.build:make-proxy-env-interpreter interpreter call-env))
+         (declaration @callee.declaration))
     (loop
       for argument in arguments
       for parameter in @declaration.params

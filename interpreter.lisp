@@ -162,8 +162,10 @@ Compared to the book:
   nil)
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
-  (let ((fn (lox.function:make-lox-function stmt)))
-    (env:define @interpreter.environment @stmt.name.lexeme fn))
+  (let* ((current-env (environment interpreter))
+         (closure-env (env:make-environment current-env))
+         (fn (lox.function:make-lox-function stmt closure-env)))
+    (env:define current-env @stmt.name.lexeme fn))
   nil)
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-print))
