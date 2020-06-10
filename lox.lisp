@@ -36,13 +36,17 @@
          (statements (parse parser))
          (interpreter (lox.interpreter:make-interpreter)))
     (when (null lox.error::*had-error*)
-      (princ (lox.interpreter:interpret interpreter statements)))))
+      (let ((resolver (lox.resolver:make-resolver interpreter)))
+        (lox.resolver:resolve resolver statements)
+        (when (null lox.error::*had-error*)
+          (princ (lox.interpreter:interpret interpreter statements)))))))
 
-(defun run-file (filepath)
+(defun run-file (filepath &key (exit t))
   (format t "Running file ~A.~%~%" filepath)
   (run (concatenate-lines (uiop:read-file-lines filepath)))
-  (when lox.error::*had-error* (exit 65))
-  (when lox.error::*had-runtime-error* (exit 70)))
+  (when exit
+    (when lox.error::*had-error* (exit 65))
+    (when lox.error::*had-runtime-error* (exit 70))))
 
 (defun run-prompt ()
   (loop do

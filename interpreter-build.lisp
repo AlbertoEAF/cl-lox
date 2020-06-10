@@ -28,4 +28,5 @@
    It shares the globals environment with the input interpreter."
   (make-instance 'interpreter :globals (globals interpreter)
                               :environment (or new-env
-                                               (env:make-environment (environment interpreter)))))
+                                               (env:make-environment (environment interpreter)))
+                              :locals (locals interpreter)))

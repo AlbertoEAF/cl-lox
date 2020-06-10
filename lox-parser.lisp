@@ -162,14 +162,12 @@
   (let ((condition (expression parser)))
     (consume parser 'ℵ:RIGHT_PAREN "Expect ')' after condition.")
     (let ((body (statement parser)))
-      (make-instance 'syntax:stmt-while :condition condition
-                                        :body body))))
+      (syntax:make-stmt-while condition body))))
 
 (defun* print-statement ((parser parser))
   (let ((expr (expression parser)))
     (consume parser 'ℵ:SEMICOLON "Expect ';' after value.")
-    (make-instance 'lox.syntax:stmt-print
-                   :expression expr)))
+    (syntax:make-stmt-print expr)))
 
 (defun* return-statement ((parser parser))
   (let ((keyword (previous parser))
@@ -185,17 +183,13 @@
       (let* ((then-branch (statement))
              (else-branch (if (match 'ℵ:ELSE)
                               (statement))))
-        (make-instance 'lox.syntax.stmt:stmt-if
-                       :condition condition
-                       :then-branch then-branch
-                       :else-branch else-branch)))))
+        (syntax:make-stmt-if condition then-branch else-branch)))))
 
 (defun* expression-statement ((parser parser))
   "An expression followed by ';'"
   (let* ((expr (expression parser)))
     (consume parser 'ℵ:SEMICOLON "Expect ';' after value.")
-    (make-instance 'lox.syntax:stmt-expression
-                   :expression expr)))
+    (syntax:make-stmt-expression expr)))
 
 (defun* function-parser ((parser parser) (kind symbol))
   (with-curry (consume match check) parser
@@ -252,9 +246,7 @@
         (initializer (if (match parser 'ℵ:EQUAL) (expression parser)
                          (syntax:make-literal :lox-unitialized-var))))
     (consume parser 'ℵ:SEMICOLON "Expect ';' after variable declaration.")
-    (make-instance 'lox.syntax.stmt:stmt-var-declaration
-                   :name name
-                   :initializer initializer)))
+    (syntax:make-stmt-var-declaration name initializer)))
 
 (defun* lox-block ((parser parser))
   (loop while (and (not (check parser 'ℵ:RIGHT_BRACE))

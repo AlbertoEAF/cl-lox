@@ -6,41 +6,47 @@
    ;; Constructors
    :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign :make-logical :make-call
    ;; Accessors
-   :left :right :operator :expression :value :assign :name))
+   :left :right :operator :expression :value :assign :name :callee :paren :arguments))
 (in-package :lox.syntax.expr)
 (proclaim '(optimize safety))
 
 (defclass expr ()
   ())
 
-(defclass++ assign (expr)
+(defmacro defsyntax (name superclasses slots)
+  "Creates a class with default initarg and accessors and constructor."
+  `(defclass++ ,name ,superclasses ,slots
+     :slot-enhancers (defclass+::with=default-initarg
+                      defclass+::with=default-accessor)))
+
+(defsyntax assign (expr)
   ((name :type token)
    (value :type expr)))
 
-(defclass++ binary (expr)
+(defsyntax binary (expr)
   ((left :type expr)
    (operator :type token)
    (right :type expr)))
 
-(defclass++ grouping (expr)
+(defsyntax grouping (expr)
   ((expression :type expr)))
 
-(defclass++ literal (expr)
+(defsyntax literal (expr)
   ((value)))
 
-(defclass++ unary (expr)
+(defsyntax unary (expr)
   ((operator :type token)
    (right :type expr)))
 
-(defclass++ var (expr)
+(defsyntax var (expr)
   ((name :type token)))
 
-(defclass++ logical (expr)
+(defsyntax logical (expr)
   ((left :type expr)
    (operator :type token)
    (right :type expr)))
 
-(defclass++ call (expr)
+(defsyntax call (expr)
   ((callee :type expr)
    (paren :type token)
    (arguments :type list)))

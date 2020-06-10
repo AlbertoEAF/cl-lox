@@ -2,7 +2,7 @@
   (:use :cl :lox-cl :lox.error)
   (:import-from :lox.environment "ENVIRONMENT")
   (:export
-   :interpreter :environment :globals
+   :interpreter :environment :globals :locals
    :evaluate :execute :execute-block
    :lox-return :make-lox-return)
   (:local-nicknames (#:syntax #:lox.syntax)
@@ -23,7 +23,10 @@ Compared to the book:
   ((globals :type env:environment
             :reader globals)
    (environment :type env:environment
-                :reader environment)))
+                :reader environment)
+   (locals :type hash-table
+           :initform (make-hash-table :test #'eq)
+           :reader locals)))
 
 (defgeneric evaluate (interpreter expr)
   (:documentation "For expressions. Equivalent to lox's visit<X>Expr."))
@@ -32,7 +35,8 @@ Compared to the book:
   (:documentation "For statements. Equivalent to lox's visit<X>Stmt"))
 
 (defun* execute-block ((statements list) (interpreter interpreter))
-  (loop for statement in statements do (execute interpreter statement)))
+  (dolist (statement statements)
+    (execute interpreter statement)))
 
 (define-condition lox-return (error)
   ((value :initform nil

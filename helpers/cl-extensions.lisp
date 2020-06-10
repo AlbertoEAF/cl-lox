@@ -26,11 +26,14 @@
 
 
 (defmacro let-return-it (it-initform &body body)
+  "Similar to let-return but implicitly creates the variable 'it' to assign to."
   `(let ((it ,it-initform))
      ,@body
      it))
 
 (defmacro let-return ((it it-initform) &body body)
+  "Similar to let but with a single variable (implying one less level of parenthesis).
+   Returns that variable (it) at the end."
   `(let ((,it ,it-initform))
      ,@body
      ,it))

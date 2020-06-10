@@ -12,20 +12,30 @@
   (setf *had-error* nil
         *had-runtime-error* nil))
 
-(defun lox-error (line message)
-  (declare (integer line))
+(defmethod lox-error ((line integer) (message string))
   (report line "" message))
+
+(defmethod lox-error ((token lox.token:token) (message string))
+  (report (lox.token:get-line token) "" message))
 
 (defun report (line where message)
   (declare (integer line))
   (format *error-output* "[line ~A] Error~A: ~A~%" line where message)
   (setf *had-error* T))
 
-(define-condition lox-runtime-error (error)
+(define-condition lox-error (error)
   ((token :initarg :token
           :accessor token)
    (message :initarg :message
             :accessor message))
+  (:documentation "Lox Error.")
+  (:report (lambda (condition stream)
+             (with-slots (token message) condition
+               (format stream "Lox Error signalled: ~A~%~% TOKEN=<~A>~%"
+                       message token)))))
+
+(define-condition lox-runtime-error (lox-error)
+  ()
   (:documentation "Lox Runtime Error.")
   (:report (lambda (condition stream)
              (with-slots (token message) condition

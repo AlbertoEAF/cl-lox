@@ -4,6 +4,10 @@
                              "alexandria" "defclass-std" "iterate"
                              "unix-opts" "defenum" "closer-mop"
                              "defstar" "str" "rutils")
+  ;; Just for debugging during dev
+  :around-compile (lambda (next)
+                    (proclaim '(optimize (debug 3) (safety 3) (speed 0)))
+                    (funcall next))
   ;;:serial t
   :components (;; Utils (can be moved to external libraries)
                (:file "helpers/checked-class")
@@ -27,7 +31,8 @@
                (:file "interpreter-build" :depends-on ("lox-callable" "interpreter-def" "lox-function-def"))
                (:file "lox-function" :depends-on ("lox-function-def" "interpreter-build"))
                (:file "interpreter" :depends-on ("lox-parser" "environment" "lox-callable" "lox-function" "interpreter-def"))
-               (:file "lox" :depends-on ("interpreter"))))
+               (:file "resolver" :depends-on ("interpreter"))
+               (:file "lox" :depends-on ("resolver"))))
 
 ;; (defsystem "aoc19/tests"
 ;;   :depends-on ("aoc19" "rove")

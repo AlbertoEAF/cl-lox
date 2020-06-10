@@ -4,15 +4,17 @@
    :environment
    :make-environment
    :define
-   :assign
-   :get-value))
+   :assign :assign-at
+   :get-value :get-value-at))
 (in-package :lox.environment)
 
 (defclass+ environment ()
   ((values :type hash-table
            :initform (make-hash-table :test 'equal))
    (enclosing :type (or null environment)
-              :initform nil)))
+              :initform nil
+              :reader enclosing)))
+
 
 (defun make-environment (&optional enclosing)
   (declare (type (or null environment) enclosing))
@@ -38,6 +40,11 @@
                                 :token name
                                 :message (format nil "Undefined variable '~A'." name-lexeme)))))))))
 
+(defun* assign-at ((env environment) (distance fixnum) (name lox.token:token) value)
+  (with-slots (values) (ancestor env distance)
+    (setf (gethash (lox.token:get-lexeme name) values)
+          value)))
+
 (defun* get-value ((env environment) (name lox.token:token))
   (with-slots (values enclosing) env
       (multiple-value-bind (value present-p)
@@ -51,3 +58,12 @@
                                 :token name
                                 :message (format nil "Undefined variable '~A'."
                                                  (lox.token:get-lexeme name)))))))))
+
+(defun* get-value-at ((env environment) (distance fixnum) (name lox.token:token))
+  (with-slots (values) (ancestor env distance)
+    (gethash (lox.token:get-lexeme name) values)))
+
+(defun* ancestor ((environment environment) (distance fixnum))
+  (let-return (env environment)
+    (dotimes (i distance)
+      (setf env (enclosing environment)))))

@@ -1,5 +1,5 @@
 (defpackage :lox.interpreter
-  (:use :cl :defstar :defclass+ :lox.interpreter.def :lox.interpreter.build)
+  (:use :cl :lox-cl :lox.interpreter.def :lox.interpreter.build)
   (:export :interpret :make-interpreter)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
@@ -10,6 +10,21 @@
 (named-readtables:in-readtable rutils:rutils-readtable)
 
 
+(defmacro defevaluate ((&rest args) &body forms)
+  "Instantiates an evaluate method which adds a resolver as first argument and curries resolve with it."
+  (let ((all-args (append '((interpreter interpreter)) args))
+        (documentation) (body-forms forms))
+    (if (typep (first forms) 'string)
+        (setf documentation (first body-forms)
+              body-forms    (rest body-forms)))
+    (if documentation
+        `(defmethod evaluate ,all-args
+           ,documentation
+           (with-curry (evaluate) interpreter
+             ,@body-forms))
+        `(defmethod evaluate ,all-args
+           (with-curry (evaluate) interpreter
+             ,@body-forms)))))
 
 #|
 Compared to the book:
@@ -47,7 +62,9 @@ Compared to the book:
 
 (defun* check-number-operands ((operator token:token) left right)
   (when (not (type? 'number left right))
-    (error 'lox.error:lox-runtime-error :token operator :message "Operands must be numbers.")))
+    (error 'lox.error:lox-runtime-error
+           :token operator
+           :message (format nil "Operands of '~A' must be numbers." @operator.lexeme))))
 
 
 (defmethod evaluate ((interpreter interpreter) (expr syntax:expr))
@@ -127,10 +144,9 @@ Compared to the book:
           (tok-type::BANG_EQUAL (not (is-equal left right)))
           (tok-type::EQUAL_EQUAL (is-equal left right))))))
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:call))
-  (let ((callee (evaluate interpreter @expr.callee))
-        (arguments (loop for argument in @expr.arguments
-                         collect (evaluate interpreter argument))))
+(defevaluate ((expr syntax:call))
+  (let ((callee (evaluate @expr.callee))
+        (arguments (mapcar #'evaluate @expr.arguments)))
     (if (not (typep callee 'lox.callable:lox-callable))
         (error 'lox.error:lox-runtime-error
                :token @expr.paren
@@ -144,18 +160,30 @@ Compared to the book:
     (lox.callable:lox-call callee interpreter arguments)))
 
 (defmethod evaluate ((interpreter interpreter) (expr syntax:var))
+  "Implements visitVariableExpr but adds a check for use of uninitialized variables."
   (let* ((name @expr.name)
-         (value (env:get-value @interpreter.environment name)))
-    (if (eq value :lox-unitialized-var) (error 'lox.error:lox-runtime-error
-                                               :token name
-                                               :message (format nil "Unitialized variable '~A'."
-                                                                (token:get-lexeme name)))
+         (value (lookup-variable interpreter name expr)))
+    (if (eq value :lox-unitialized-var)
+        (error 'lox.error:lox-runtime-error
+               :token name
+               :message (format nil "Unitialized variable '~A'."
+                                (token:get-lexeme name)))
         value)))
 
+(defun* lookup-variable ((interpreter interpreter) (name lox.token:token) (expr syntax:expr))
+  (let ((distance (gethash expr (locals interpreter))))
+    (if distance
+        (env:get-value-at (environment interpreter) distance name)
+        (env:get-value (globals interpreter) name))))
+
 (defmethod evaluate ((interpreter interpreter) (expr syntax:assign))
-  (let* ((name @expr.name)
-         (value (evaluate interpreter @expr.value)))
-    (env:assign @interpreter.environment name value)))
+  "Implements visitAssignExpr."
+  (let ((name @expr.name)
+        (value (evaluate interpreter @expr.value))
+        (distance (gethash expr (locals interpreter))))
+    (if distance
+        (env:assign-at (environment interpreter) distance name value)
+        (env:assign (globals interpreter) name value))))
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-expression))
   (evaluate interpreter @stmt.expression)
@@ -184,7 +212,7 @@ Compared to the book:
     nil))
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-while))
-  (loop while (eval-truthy-p (evaluate interpreter @stmt.condition))
+  (loop while (eval-truthy-p (evaluate interpreter @stmt.stmt-condition))
         do (execute interpreter @stmt.body))
   nil)
 
@@ -194,13 +222,14 @@ Compared to the book:
   nil)
 
 (defmethod execute ((interpreter interpreter) (if-stmt syntax:stmt-if))
-  (cond ((eval-truthy-p (evaluate interpreter @if-stmt.condition))
+  (cond ((eval-truthy-p (evaluate interpreter @if-stmt.stmt-condition))
          (execute interpreter @if-stmt.then-branch))
         (@if-stmt.else-branch
          (execute interpreter @if-stmt.else-branch)))
   nil)
 
-
+(defmethod interpreter-resolve ((interpreter interpreter) (expr syntax:expr) (depth fixnum))
+  (setf (gethash expr @interpreter.locals) depth))
 
 ;; (defmethod execute ((interpreter interpreter) (stmt syntax:stmt))
 ;;    (execute stmt))
