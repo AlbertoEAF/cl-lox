@@ -1,6 +1,6 @@
 (defpackage :lox
   (:use :cl :defclass-std :lox.scanner :lox.parser :lox.pprint)
-  (:export :run :run-prompt :run-file :main))
+  (:export :run :run-prompt :run-file :run-demos :main))
 (in-package :lox)
 (import 'unix-opts)
 
@@ -65,7 +65,7 @@
         (nprint header-char (+ per-side-chars remainder-chars))
         (nprint #\Newline post-lines)))))
 
-(defun run-demos (folder &key (stop-on-error nil) (exit nil))
+(defun run-demos (folder &key (stop-on-error t) (exit nil))
   (let ((files (remove-if-not (lambda (p) (str:ends-with-p ".lox" (namestring p)))
                               (uiop:directory-files folder))))
     (format nil "~%### Running ~A demos ###" (length files))
@@ -75,6 +75,7 @@
       (when (and stop-on-error
                  (or lox.error::*had-error*
                      lox.error::*had-runtime-error*))
+        (format t "Found error in demo. Aborting. Set :stop-on-error to nil to ignore errors.~%")
         (return)))))
 
 (defun run-prompt ()

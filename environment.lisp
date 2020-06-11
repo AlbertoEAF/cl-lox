@@ -61,16 +61,22 @@
 
 (defun* get-value-at ((env environment) (distance fixnum) (name lox.token:token))
   (with-slots (values) (ancestor env distance)
-    (gethash (lox.token:get-lexeme name) values)))
+    (multiple-value-bind (value present-p) (gethash (lox.token:get-lexeme name) values)
+      (assert present-p ()
+              "get-value-at failed to fetch variable '~A' from ~A's ancestor ~A at distance ~A."
+              name env (ancestor env distance) distance)
+      value)))
+
 
 (defun* ancestor ((environment environment) (distance fixnum))
   (let-return (env environment)
     (dotimes (i distance)
-      (setf env (enclosing environment)))))
+      (setf env (enclosing env)))))
 
 (defmethod print-object ((env environment) out)
   (print-unreadable-object (env out :identity t)
     (let ((enclosing (enclosing env)))
       (format out "ENV ENCLOSING=")
-      (print-unreadable-object (enclosing out) :type t :identity t)
+      (print-unreadable-object (enclosing out :identity t)
+        (format out "ENV"))
       (format out " #VALUES=~A" (hash-table-count (slot-value env 'values))))))
