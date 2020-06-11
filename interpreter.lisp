@@ -191,10 +191,9 @@ Compared to the book:
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
   "Implements visitFunctionStmt."
-  (let* ((current-env (environment interpreter))
-         (closure-env (env:make-environment current-env))
-         (fn (lox.function:make-lox-function stmt closure-env)))
-    (env:define current-env @stmt.name.lexeme fn))
+  (let* ((env (environment interpreter))
+         (fn (lox.function:make-lox-function stmt env)))
+    (env:define env @stmt.name.lexeme fn))
   nil)
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-print))
