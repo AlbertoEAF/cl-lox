@@ -40,7 +40,7 @@
     (format nil #?"${token-type} ${lexeme} ${literal}")))
 
 (defmethod print-object ((token token) out)
-  (print-unreadable-object (token out :type t :identity t)
+  (print-unreadable-object (token out)
     (with-slots (token-type lexeme literal line) token
-      (format out "~A lex=~A lit=~A @line=~A"
+      (format out "Token:~A '~A'"
               token-type lexeme literal line))))

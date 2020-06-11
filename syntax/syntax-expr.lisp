@@ -58,7 +58,7 @@
            (class-of clos-obj))))
 
 (defmethod print-object ((expr expr) out)
-  (print-unreadable-object (expr out :type t :identity t)
+  (print-unreadable-object (expr out :type t)
     (loop
       for slot-name in (get-slot-names expr)
       for slot-value = (slot-value expr slot-name)
