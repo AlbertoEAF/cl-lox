@@ -241,3 +241,28 @@ Compared to the book:
     (lox.error:lox-runtime-error (e)
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
+
+(defun* count-enclosed-envs ((interpreter interpreter))
+  "Counts the number of environments enclosed by the global."
+  (let ((i 0))
+    (loop
+      with globals = (globals interpreter)
+      for env = (environment interpreter) then (env::enclosing env)
+      while (not (eq globals env))
+      do (incf i))
+    i))
+
+
+(defmethod print-object ((interpreter interpreter) out)
+  (let ((enclosed-envs (count-enclosed-envs interpreter)))
+    (print-unreadable-object (interpreter out :identity t)
+      (let ((environment (environment interpreter))
+            (locals (locals interpreter))
+            (globals (globals interpreter)))
+        (format out "INTERPRETER #ENVS=~A #ENV-VARS=~A #GLOBALS=~A #LOCALS=~A "
+                enclosed-envs
+                (hash-table-count (slot-value environment 'values))
+                (hash-table-count (slot-value globals 'values))
+                (hash-table-count locals))
+        (print-unreadable-object (environment out :identity t)
+          (format out "ENV"))))))

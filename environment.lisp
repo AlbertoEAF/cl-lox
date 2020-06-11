@@ -67,3 +67,10 @@
   (let-return (env environment)
     (dotimes (i distance)
       (setf env (enclosing environment)))))
+
+(defmethod print-object ((env environment) out)
+  (print-unreadable-object (env out :identity t)
+    (let ((enclosing (enclosing env)))
+      (format out "ENV ENCLOSING=")
+      (print-unreadable-object (enclosing out) :type t :identity t)
+      (format out " #VALUES=~A" (hash-table-count (slot-value env 'values))))))
