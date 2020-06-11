@@ -60,3 +60,21 @@
 (defsyntax stmt-return (stmt)
   ((stmt-keyword :type token)
    (value :type expr)))
+
+(defmethod print-object ((stmt stmt) out)
+  (print-unreadable-object (stmt out :identity t)
+    (format out "~A" (class-name (class-of stmt)))
+    (print-details stmt out)))
+
+(defgeneric print-details (stmt out)
+  (:documentation "Helper function to print-object for children of stmt. Prints the stmt details."))
+
+(defmethod print-details ((stmt stmt) out)
+  "By default no details are printed.")
+
+(defmethod print-details ((stmt stmt-function) out)
+  (format out " ~A" (lox.token:get-lexeme (name stmt))))
+
+(defmethod print-details ((stmt stmt-var-declaration) out)
+  (format out " ~A" (lox.token:get-lexeme (name stmt))))
+
