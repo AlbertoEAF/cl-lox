@@ -48,6 +48,35 @@
     (when lox.error::*had-error* (exit 65))
     (when lox.error::*had-runtime-error* (exit 70))))
 
+(defun print-header (msg &key
+                           (header-char #\-) (header-width 79) (spacing 1)
+                           (pre-lines 3) (post-lines 1))
+  (flet ((nprint (char n)
+           (dotimes (_ n)
+             (write-char char))))
+    (let* ((msg-len (length msg))
+           (header-chars-count (- header-width (* 2 spacing) msg-len)))
+      (multiple-value-bind (per-side-chars remainder-chars) (truncate header-chars-count 2)
+        (nprint #\Newline pre-lines)
+        (nprint header-char per-side-chars)
+        (nprint #\Space spacing)
+        (princ msg)
+        (nprint #\Space spacing)
+        (nprint header-char (+ per-side-chars remainder-chars))
+        (nprint #\Newline post-lines)))))
+
+(defun run-demos (folder &key (stop-on-error nil) (exit nil))
+  (let ((files (remove-if-not (lambda (p) (str:ends-with-p ".lox" (namestring p)))
+                              (uiop:directory-files folder))))
+    (format nil "~%### Running ~A demos ###" (length files))
+    (dolist (file files)
+      (print-header (str:concat "Demo " (pathname-name file)))
+      (lox:run-file file :exit exit)
+      (when (and stop-on-error
+                 (or lox.error::*had-error*
+                     lox.error::*had-runtime-error*))
+        (return)))))
+
 (defun run-prompt ()
   (loop do
     (format t "> ")
