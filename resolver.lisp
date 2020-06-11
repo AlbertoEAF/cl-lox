@@ -26,7 +26,8 @@
            :accessor scopes)
    (current-function :type current-function-type
                      :initform :NONE
-                     :accessor current-function)))
+                     :accessor current-function
+                     :documentation "Marks :NONE, :FUNCTION to know the current scope.")))
 
 (defun* make-resolver ((interpreter lox.interpreter.def:interpreter))
   (make-instance 'resolver :interpreter interpreter))
@@ -75,7 +76,7 @@
 
 (defun* resolve-function ((resolver resolver) (function syntax:stmt-function)
                           (function-type current-function-type))
-  (let ((enclosing-function (current-function resolver)))
+  (let ((enclosing-function-type (current-function resolver)))
     (setf (current-function resolver) function-type)
     (begin-scope resolver)
     (dolist (param (params function))
@@ -83,7 +84,7 @@
       (define-in-scope resolver param))
     (resolve resolver (body function))
     (end-scope resolver)
-    (setf (current-function resolver) enclosing-function)))
+    (setf (current-function resolver) enclosing-function-type)))
 
 (defresolve ((stmt syntax:stmt-var-declaration))
   (declare-in-scope resolver (name stmt))
@@ -127,9 +128,12 @@
   (loop
     for scope-jumps from 0
     for scope in (scopes resolver)
-    when (gethash @name.lexeme scope)
-      do (lox.interpreter::interpreter-resolve @resolver.interpreter expr scope-jumps)
-         (loop-finish)))
+    do
+       (multiple-value-bind (_ present-p) (gethash @name.lexeme scope)
+         (declare (ignore _))
+         (when present-p
+           (lox.interpreter::interpreter-resolve @resolver.interpreter expr scope-jumps)
+           (loop-finish)))))
 
 (defresolve ((stmt syntax:stmt-expression))
   (resolve @stmt.expression))

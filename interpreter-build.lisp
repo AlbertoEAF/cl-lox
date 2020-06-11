@@ -1,14 +1,11 @@
 (defpackage :lox.interpreter.build
   (:use :cl :lox-cl :lox.interpreter.def)
-  (:export :interpreter :make-interpreter :make-proxy-env-interpreter)
+  (:export :interpreter :make-interpreter)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
                     (#:tok-type #:lox.token.types)
                     (#:env      #:lox.environment)))
 (in-package :lox.interpreter.build)
-
-(named-readtables:in-readtable rutils:rutils-readtable)
-
 
 (defun make-interpreter ()
   (let ((globals (env:make-environment)))
@@ -21,12 +18,3 @@
       (define-global-function "readfile" (lambda (fpath) (uiop:read-file-string fpath)))
       (define-global-function "readline" (lambda () (read-line))))
     (make-instance 'interpreter :globals globals :environment globals)))
-
-(defun* make-proxy-env-interpreter ((interpreter interpreter) &optional new-env)
-  "Creates an interpreter whose environment is new and points to the input interpreter's environment.
-
-   It shares the globals environment with the input interpreter."
-  (make-instance 'interpreter :globals (globals interpreter)
-                              :environment (or new-env
-                                               (env:make-environment (environment interpreter)))
-                              :locals (locals interpreter)))

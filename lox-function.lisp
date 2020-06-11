@@ -11,15 +11,14 @@
 (defmethod lox-call ((callee lox-function)
                      (interpreter ℑ.def:interpreter)
                      (arguments list))
-  (let* ((call-env (env:make-environment @callee.closure))
-         (call-scope-interpreter (ℑ.build:make-proxy-env-interpreter interpreter call-env))
-         (declaration @callee.declaration))
+  (let ((call-env (env:make-environment @callee.closure))
+        (declaration @callee.declaration))
     (loop
       for argument in arguments
       for parameter in @declaration.params
-      do (env:define (environment call-scope-interpreter) @parameter.lexeme argument))
+      do (env:define call-env @parameter.lexeme argument))
     (handler-case
-        (ℑ.def:execute-block @declaration.body call-scope-interpreter)
+        (ℑ.def:execute-block interpreter @declaration.body call-env)
       (lox-return (lox-ret)
         (return-from lox-call @lox-ret.value)))
     nil))

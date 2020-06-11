@@ -65,10 +65,11 @@
         (nprint header-char (+ per-side-chars remainder-chars))
         (nprint #\Newline post-lines)))))
 
-(defun run-demos (folder &key (stop-on-error t) (exit nil))
+(defun run-demos (&optional (folder "./demos/") &key (stop-on-error t) (exit nil))
   (let ((files (remove-if-not (lambda (p) (str:ends-with-p ".lox" (namestring p)))
                               (uiop:directory-files folder))))
-    (format nil "~%### Running ~A demos ###" (length files))
+    (format t "~%### Running ~A demos ###" (length files))
+    (if (zerop (length files)) (warn (format nil "Found no demos in folder ~A!" folder)))
     (dolist (file files)
       (print-header (str:concat "Demo " (pathname-name file)))
       (lox:run-file file :exit exit)

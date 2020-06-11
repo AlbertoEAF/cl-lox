@@ -28,8 +28,8 @@
 
 #|
 Compared to the book:
- - visit<X>Expr() -> evaluate call
- - visit<X>Stmt() -> execute call
+ - visit<X>Expr() -> evaluate
+ - visit<X>Stmt() -> execute
 |#
 
 (defun truthy-p (expr)
@@ -190,6 +190,7 @@ Compared to the book:
   nil)
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
+  "Implements visitFunctionStmt."
   (let* ((current-env (environment interpreter))
          (closure-env (env:make-environment current-env))
          (fn (lox.function:make-lox-function stmt closure-env)))
@@ -217,8 +218,9 @@ Compared to the book:
   nil)
 
 (defmethod execute ((interpreter interpreter) (stmt lox.syntax.stmt:stmt-block))
-  (execute-block @stmt.statements
-                 (make-proxy-env-interpreter interpreter))
+  (execute-block interpreter
+                 @stmt.statements
+                 (env:make-environment (environment interpreter)))
   nil)
 
 (defmethod execute ((interpreter interpreter) (if-stmt syntax:stmt-if))

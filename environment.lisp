@@ -46,6 +46,7 @@
           value)))
 
 (defun* get-value ((env environment) (name lox.token:token))
+  "Implements get"
   (with-slots (values enclosing) env
       (multiple-value-bind (value present-p)
           (gethash (lox.token:get-lexeme name)
@@ -60,12 +61,18 @@
                                                  (lox.token:get-lexeme name)))))))))
 
 (defun* get-value-at ((env environment) (distance fixnum) (name lox.token:token))
-  (with-slots (values) (ancestor env distance)
-    (multiple-value-bind (value present-p) (gethash (lox.token:get-lexeme name) values)
-      (assert present-p ()
-              "get-value-at failed to fetch variable '~A' from ~A's ancestor ~A at distance ~A."
-              name env (ancestor env distance) distance)
-      value)))
+  "Implements getAt."
+  (let ((ancestor (ancestor env distance)))
+    (with-slots (values) ancestor
+      (multiple-value-bind (value present-p) (gethash (lox.token:get-lexeme name) values)
+        (if present-p value
+            (progn
+              (warn "MISSING CLOSURE OPTIMIZATION - Couldn't find variable with get-value-at() alone! Using get-value() for the final jump (correct behaviour ensured)!")
+              (return-from get-value-at (get-value ancestor name))))))))
+        ;; (assert present-p ()
+        ;;         "get-value-at failed to fetch variable '~A' from ~A's ancestor ~A at distance ~A."
+        ;;         name env (ancestor env distance) distance)
+        ;; value))))
 
 
 (defun* ancestor ((environment environment) (distance fixnum))

@@ -1,6 +1,6 @@
 (defpackage :lox.interpreter.def
   (:use :cl :lox-cl :lox.error)
-  (:import-from :lox.environment "ENVIRONMENT")
+  (:import-from :lox.environment :environment)
   (:export
    :interpreter :environment :globals :locals
    :evaluate :execute :execute-block
@@ -34,9 +34,15 @@ Compared to the book:
 (defgeneric execute (interpreter stmt)
   (:documentation "For statements. Equivalent to lox's visit<X>Stmt"))
 
-(defun* execute-block ((statements list) (interpreter interpreter))
-  (dolist (statement statements)
-    (execute interpreter statement)))
+(defun* execute-block ((interpreter interpreter) (statements list) (env environment))
+  (let ((previous-env (environment interpreter)))
+    (setf (slot-value interpreter 'environment)
+          env)
+    (unwind-protect
+         (dolist (statement statements)
+           (execute interpreter statement))
+      (setf (slot-value interpreter 'environment)
+            previous-env))))
 
 (define-condition lox-return (error)
   ((value :initform nil
