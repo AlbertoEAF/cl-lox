@@ -269,9 +269,13 @@ Compared to the book:
       (lox.error:lox-runtime-error e))))
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-class))
-  (env:define (environment interpreter) @stmt.name.lexeme nil)
-  (let ((class (lox.class:make-lox-class @stmt.name.lexeme)))
-    (env:assign (environment interpreter) @stmt.name class)))
+  (env:define (environment interpreter) @stmt.name.lexeme)
+  (let ((methods (make-hash-table :test #'equal)))
+    (dolist (method @stmt.methods)
+      (setf (gethash @method.name.lexeme methods)
+            (lox.function:make-lox-function method (environment interpreter))))
+    (let ((class (lox.class:make-lox-class @stmt.name.lexeme methods)))
+      (env:assign (environment interpreter) @stmt.name class))))
 
 ;;; Printing
 

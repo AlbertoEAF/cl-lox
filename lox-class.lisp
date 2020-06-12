@@ -1,16 +1,19 @@
 (defpackage :lox.class
   (:use :cl :lox-cl :lox.callable)
-  (:export :lox-class :make-lox-class))
+  (:export :lox-class :make-lox-class :methods :lox-find-method))
 (in-package :lox.class)
 
 (defclass++ lox-class (lox-callable)
   ((name :type string
-         :accessor name)))
+         :accessor name)
+   (methods :type hash-table
+            :accessor methods)))
 
 (defpackage :lox.instance
   (:use :cl :lox-cl :lox.class)
   (:export :lox-instance :make-lox-instance
-           :instance-get :instance-set))
+           :instance-get :instance-set)
+  (:local-nicknames (#:token #:lox.token)))
 (in-package :lox.instance)
 
 
@@ -27,6 +30,12 @@
 ;;; Class
 (in-package :lox.class)
 
+(defun* lox-find-method ((class lox-class) (name string))
+  "Returns the method or nil if not defined."
+  (multiple-value-bind (value value-p)
+      (gethash name (methods class))
+    (if value-p value)))
+
 (defmethod lox-call ((callee lox-class)
                      (interpreter lox.interpreter.def:interpreter)
                      (arguments list))
@@ -42,19 +51,23 @@
 ;;; Instance
 (in-package :lox.instance)
 
-(defun* instance-get ((instance lox-instance) (name lox.token:token))
-  (multiple-value-bind (value present-p)
-      (gethash (lox.token:get-lexeme name)
+(defun* instance-get ((instance lox-instance) (name token:token))
+  (multiple-value-bind (value value-p)
+      (gethash (token:get-lexeme name)
                (fields instance))
-    (if present-p
+    (if value-p
         value
-        (error 'lox.error:lox-runtime-error
-               :token name
-               :message (format nil "Undefined property '~A'."
-                                (lox.token:get-lexeme name))))))
+        (let ((method (lox-find-method (lox-class instance)
+                                       (lox.token:get-lexeme name))))
+          (if method
+              method
+              (error 'lox.error:lox-runtime-error
+                     :token name
+                     :message (format nil "Undefined property '~A'."
+                                      (token:get-lexeme name))))))))
 
-(defun* instance-set ((instance lox-instance) (name lox.token:token) value)
-  (setf (gethash (lox.token:get-lexeme name) (fields instance))
+(defun* instance-set ((instance lox-instance) (name token:token) value)
+  (setf (gethash (token:get-lexeme name) (fields instance))
         value))
 
 (defmethod print-object ((instance lox-instance) out)

@@ -186,7 +186,10 @@
 
 (defresolve ((stmt syntax:stmt-class))
   (declare-in-scope @stmt.name)
-  (define-in-scope @stmt.name))
+  (define-in-scope @stmt.name)
+  (loop for method in @stmt.methods do
+    (let ((declaration :METHOD))
+      (resolve-function resolver method declaration))))
 
 (defresolve ((expr syntax:expr-get))
   (resolve (object expr)))

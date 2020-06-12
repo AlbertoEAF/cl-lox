@@ -20,7 +20,7 @@
   (declare (type (or null environment) enclosing))
   (make-instance 'environment :enclosing enclosing))
 
-(defun* define ((env environment) (name string) value)
+(defun* define ((env environment) (name string) &optional (value nil))
   "Used in variable declarations, to define the variable value."
   (setf (gethash name (slot-value env 'values))
         value))
