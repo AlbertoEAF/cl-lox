@@ -34,15 +34,15 @@ Compared to the book:
 
 (defun truthy-p (expr)
   (case expr
-    ((nil :f :null) :f)
-    (t :t)))
+    ((nil :false :null) :false)
+    (t :true)))
 
 (defun not-truthy-p (expr)
-  (if (truthy-p expr) :f
-      :t))
+  (if (truthy-p expr) :false
+      :true))
 
 (defun eval-truthy-p (expr)
-  (eq :t (truthy-p expr)))
+  (eq :true (truthy-p expr)))
 
 (defun type? (type-specifier &rest vars)
   "Ensure all vars are of type type-specifier."

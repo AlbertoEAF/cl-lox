@@ -65,7 +65,7 @@
         (nprint header-char (+ per-side-chars remainder-chars))
         (nprint #\Newline post-lines)))))
 
-(defun run-demos (&optional (folder "./demos/") &key (stop-on-error t) (exit nil))
+(defun run-demos (&optional (folder "./demos/") (stop-on-error t) (exit nil))
   (let ((files (remove-if-not (lambda (p) (str:ends-with-p ".lox" (namestring p)))
                               (uiop:directory-files folder))))
     (format t "~%### Running ~A demos ###" (length files))

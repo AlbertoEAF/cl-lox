@@ -22,8 +22,10 @@
    :make-stmt-while
    :make-stmt-function
    :make-stmt-return
+   ;; Classes and constructors
+   :stmt-class :make-stmt-class
    ;; Accessors
-   :expression :name :initializer :statements :stmt-condition :then-branch :else-branch :body :params :stmt-keyword :value))
+   :expression :name :initializer :statements :stmt-condition :then-branch :else-branch :body :params :stmt-keyword :value :methods))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -60,6 +62,10 @@
 (defsyntax stmt-return (stmt)
   ((stmt-keyword :type token)
    (value :type expr)))
+
+(defsyntax stmt-class (stmt)
+  ((name :type token)
+   (methods :type list)))
 
 (defmethod print-object ((stmt stmt) out)
   (print-unreadable-object (stmt out :identity t)

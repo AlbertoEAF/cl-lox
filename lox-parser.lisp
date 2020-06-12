@@ -138,7 +138,8 @@
         (setf body (syntax:make-stmt-block
                     (list body
                           (syntax:make-stmt-expression increment)))))
-      (setf body (syntax:make-stmt-while (or condition (syntax:make-literal :t))
+      (setf body (syntax:make-stmt-while (or condition
+                                             (syntax:make-literal :true))
                                          body))
       (when initializer
         (setf body (syntax:make-stmt-block (list initializer body))))
@@ -150,12 +151,22 @@
   "Parses the meta-statement var declaration in lox.
    It's not really a statement but a 'super' statement. It has to be parsed before regular statements."
   (handler-case
-      (cond ((match parser 'ℵ:FUN) (function-parser parser :function))
+      (cond ((match parser 'ℵ:CLASS) (class-declaration parser))
+            ((match parser 'ℵ:FUN) (function-parser parser :FUNCTION))
             ((match parser 'ℵ:VAR) (var-declaration parser))
             (t (statement parser)))
     (lox-parse-error ()
       (synchronize parser)
       nil)))
+
+(defun* class-declaration ((parser parser))
+  (let ((name (consume parser 'ℵ:IDENTIFIER "Expect class name.")))
+    (consume parser 'ℵ:LEFT_BRACE "Expect '{' before class body.")
+    (let ((methods (loop until (or (check parser 'ℵ:RIGHT_BRACE)
+                                   (at-end-p parser))
+                         collect (function-parser parser :METHOD))))
+      (consume parser 'ℵ:RIGHT_BRACE "Expect '}' after class body.")
+      (syntax:make-stmt-class name methods))))
 
 (defun* while-statement ((parser parser))
   (consume parser 'ℵ:LEFT_PAREN "Expect '(' after 'while'.")
@@ -200,9 +211,8 @@
       (when (not (check 'ℵ:RIGHT_PAREN))
         (loop
           do
-             (if (>= (length parameters) 255)
-                 (error
-                  (make-lox-parse-error (peek parser) "Cannot have more than 255 pareters.")))
+             (when (>= (length parameters) 255)
+               (error (make-lox-parse-error (peek parser) "Cannot have more than 255 pareters.")))
              (push (consume 'ℵ:IDENTIFIER "Expect parameter name.")
                    parameters)
           while (match 'ℵ:COMMA)))
@@ -305,8 +315,9 @@
                                             (unary parser))))))
 
 (defun* unary ((parser parser))
-  (if (match parser 'ℵ:BANG 'ℵ:MINUS) (syntax:make-unary (previous parser)
-                                                                       (unary parser))
+  (if (match parser 'ℵ:BANG 'ℵ:MINUS)
+      (syntax:make-unary (previous parser)
+                         (unary parser))
       (lox-call parser)))
 
 (defun* lox-call ((parser parser))
@@ -330,22 +341,21 @@
       (syntax:make-call callee paren (nreverse arguments)))))
 
 (defun* primary ((parser parser))
-  (with-curry (match previous) parser
+  (with-curry (match previous consume) parser
     (cond
       ;; Had to disambiguate from nil (issue with false==nil in lisp):
-      ((match 'ℵ:TRUE)  (syntax:make-literal :t))
-      ((match 'ℵ:FALSE) (syntax:make-literal :f))
+      ((match 'ℵ:TRUE)  (syntax:make-literal :true))
+      ((match 'ℵ:FALSE) (syntax:make-literal :false))
       ((match 'ℵ:NIL)   (syntax:make-literal :null))
       ((match 'ℵ:NUMBER 'ℵ:STRING)
        (syntax:make-literal (token:get-literal (previous))))
       ((match 'ℵ:IDENTIFIER)
        (syntax:make-var (previous)))
-      (t (if (match 'ℵ:LEFT_PAREN) (let ((expr (expression parser)))
-                                             (consume parser
-                                                      'ℵ:RIGHT_PAREN
-                                                      "Expect ')' after expression.")
-                                             (syntax:make-grouping expr))
-             (error (make-lox-parse-error (peek parser) "Expect expression.")))))))
+      ((match 'ℵ:LEFT_PAREN)
+       (let ((expr (expression parser)))
+         (consume 'ℵ:RIGHT_PAREN "Expect ')' after expression.")
+         (syntax:make-grouping expr)))
+      (t (error (make-lox-parse-error (peek parser) "Expect expression."))))))
 
 
 (defun* parse ((parser parser))
