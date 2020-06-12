@@ -1,14 +1,17 @@
 (defsystem "cl-lox"
-  :depends-on ("cl-interpol" "cl-graph" "trivial-arguments"
-                             "queues" "log4cl" "array-operations"
+  :depends-on ("cl-interpol" "trivial-arguments"
+                             "log4cl" "array-operations"
                              "alexandria" "defclass-std" "iterate"
                              "unix-opts" "defenum" "closer-mop"
                              "defstar" "str" "rutils")
+
   ;; Just for debugging during dev
   :around-compile (lambda (next)
                     (proclaim '(optimize (debug 3) (safety 3) (speed 0)))
                     (funcall next))
-  :serial t
+
+  ;;:serial t
+
   :components (;; Utils (can be moved to external libraries)
                (:file "helpers/checked-class")
                (:file "helpers/defclass-plus" :depends-on ("helpers/checked-class"))
@@ -35,7 +38,7 @@
                (:file "resolver" :depends-on ("interpreter"))
                (:file "lox" :depends-on ("resolver"))))
 
-;; (defsystem "aoc19/tests"
-;;   :depends-on ("aoc19" "rove")
+;; (defsystem "cl-lox/tests"
+;;   :depends-on ("cl-lox" "rove")
 ;;   :components ((:file "day05-tests")
 ;;                (:file "intcode-tests")))
