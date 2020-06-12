@@ -1,12 +1,21 @@
 (defpackage :lox.syntax.expr
   (:use :cl :lox.token :defclass-std :defclass+)
   (:export
-   ;; Syntax types
-   :expr :binary :grouping :literal :unary :var :logical :call
-   ;; Constructors
-   :make-binary :make-literal :make-grouping :make-unary :make-var :make-assign :make-logical :make-call
+   ;; Base type
+   :expr
+   ;; Expr and constructors
+   :binary   :make-binary
+   :grouping :make-grouping
+   :literal  :make-literal
+   :unary    :make-unary
+   :var      :make-var
+   :assign   :make-assign
+   :logical  :make-logical
+   :call     :make-call
+   :expr-get :make-expr-get
+   :expr-set :make-expr-set
    ;; Accessors
-   :left :right :operator :expression :value :assign :name :callee :paren :arguments))
+   :left :right :operator :expression :value :assign :name :callee :paren :arguments :object))
 (in-package :lox.syntax.expr)
 (proclaim '(optimize safety))
 
@@ -51,8 +60,19 @@
    (paren :type token)
    (arguments :type list)))
 
+(defsyntax expr-get (expr)
+  ((object :type expr)
+   (name :type token)))
+
+(defsyntax expr-set (expr)
+  ((object :type expr)
+   (name :type token)
+   (value :type expr)))
+
+;;; Printing
 
 (defun get-slot-names (clos-obj)
+  "Fetch all slot names from object (so prints are dynamic for any expr class)."
   (mapcar #'sb-mop:slot-definition-name
           (sb-mop:class-direct-slots
            (class-of clos-obj))))

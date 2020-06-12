@@ -8,7 +8,7 @@
   :around-compile (lambda (next)
                     (proclaim '(optimize (debug 3) (safety 3) (speed 0)))
                     (funcall next))
-  ;;:serial t
+  :serial t
   :components (;; Utils (can be moved to external libraries)
                (:file "helpers/checked-class")
                (:file "helpers/defclass-plus" :depends-on ("helpers/checked-class"))
@@ -30,7 +30,8 @@
                (:file "lox-function-def" :depends-on ("lox-callable"))
                (:file "interpreter-build" :depends-on ("lox-callable" "interpreter-def" "lox-function-def"))
                (:file "lox-function" :depends-on ("lox-function-def" "interpreter-build"))
-               (:file "interpreter" :depends-on ("lox-parser" "environment" "lox-callable" "lox-function" "interpreter-def"))
+               (:file "lox-class" :depends-on ("lox-callable" "interpreter-build"))
+               (:file "interpreter" :depends-on ("lox-parser" "environment" "lox-callable" "lox-function" "interpreter-def" "lox-class"))
                (:file "resolver" :depends-on ("interpreter"))
                (:file "lox" :depends-on ("resolver"))))
 

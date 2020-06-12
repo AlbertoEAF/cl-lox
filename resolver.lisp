@@ -187,3 +187,10 @@
 (defresolve ((stmt syntax:stmt-class))
   (declare-in-scope @stmt.name)
   (define-in-scope @stmt.name))
+
+(defresolve ((expr syntax:expr-get))
+  (resolve (object expr)))
+
+(defresolve ((expr syntax:expr-set))
+  (resolve @expr.value)
+  (resolve @expr.object))

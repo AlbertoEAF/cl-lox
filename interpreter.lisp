@@ -11,20 +11,30 @@
 
 
 (defmacro defevaluate ((&rest args) &body forms)
-  "Instantiates an evaluate method which adds a resolver as first argument and curries resolve with it."
+  "Instantiates an evaluate method which adds an interpreter as first argument and curries evaluate with it."
   (let ((all-args (append '((interpreter interpreter)) args))
         (documentation) (body-forms forms))
     (if (typep (first forms) 'string)
         (setf documentation (first body-forms)
               body-forms    (rest body-forms)))
-    (if documentation
-        `(defmethod evaluate ,all-args
-           ,documentation
-           (with-curry (evaluate) interpreter
-             ,@body-forms))
-        `(defmethod evaluate ,all-args
-           (with-curry (evaluate) interpreter
-             ,@body-forms)))))
+    `(defmethod evaluate ,all-args
+       ,(or documentation "")
+       (with-curry (evaluate) interpreter
+         (declare (ignorable #'evaluate))
+         ,@body-forms))))
+
+(defmacro defexecute ((&rest args) &body forms)
+  "Instantiates an execute method which adds an interpreter as first argument and curries evaluate and execute with it. nil is automatically returned."
+  (let ((all-args (append '((interpreter interpreter)) args))
+        (documentation) (body-forms (append forms '(nil))))
+    (if (typep (first forms) 'string)
+        (setf documentation (first body-forms)
+              body-forms    (rest body-forms)))
+    `(defmethod evaluate ,all-args
+       ,(or documentation "")
+       (with-curry (evaluate execute) interpreter
+         (declare (ignorable #'evaluate #'execute))
+         ,@body-forms))))
 
 #|
 Compared to the book:
@@ -67,25 +77,25 @@ Compared to the book:
            :message (format nil "Operands of '~A' must be numbers." @operator.lexeme))))
 
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:expr))
+(defevaluate ((expr syntax:expr))
   expr)
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:literal))
+(defevaluate ((expr syntax:literal))
   @expr.value)
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:logical))
-  (let ((left (evaluate interpreter @expr.left)))
+(defevaluate ((expr syntax:logical))
+  (let ((left (evaluate @expr.left)))
     (cond ((eq 'tok-type:OR
                (token:get-token-type @expr.operator))
            (if (eval-truthy-p left) left))
           ((not (eval-truthy-p left)) left)
-          (t (evaluate interpreter @expr.right)))))
+          (t (evaluate @expr.right)))))
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:grouping))
-  (evaluate interpreter @expr.expression))
+(defevaluate ((expr syntax:grouping))
+  (evaluate @expr.expression))
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:unary))
-  (let ((right (evaluate interpreter @expr.right))
+(defevaluate ((expr syntax:unary))
+  (let ((right (evaluate @expr.right))
         (operator-token-type (token:get-token-type @expr.operator)))
     (cond ((eql 'tok-type:MINUS operator-token-type)
            (- right))
@@ -108,9 +118,9 @@ Compared to the book:
           ((typep obj 'number) (lox-number-string-repr obj))
           (t (format nil "~S" obj)))))
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:binary))
-  (let* ((left (evaluate interpreter  @expr.left))
-         (right (evaluate interpreter @expr.right))
+(defevaluate ((expr syntax:binary))
+  (let* ((left (evaluate  @expr.left))
+         (right (evaluate @expr.right))
          (operator @expr.operator)
          (operator-token-type (token:get-token-type operator))
          (simple-op (case operator-token-type
@@ -159,7 +169,7 @@ Compared to the book:
                                 (length arguments))))
     (lox.callable:lox-call callee interpreter arguments)))
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:var))
+(defevaluate ((expr syntax:var))
   "Implements visitVariableExpr but adds a check for use of uninitialized variables."
   (let* ((name @expr.name)
          (value (lookup-variable interpreter name expr)))
@@ -176,14 +186,29 @@ Compared to the book:
         (env:get-value-at (environment interpreter) distance name)
         (env:get-value (globals interpreter) name))))
 
-(defmethod evaluate ((interpreter interpreter) (expr syntax:assign))
+(defevaluate ((expr syntax:assign))
   "Implements visitAssignExpr."
   (let ((name @expr.name)
-        (value (evaluate interpreter @expr.value))
+        (value (evaluate @expr.value))
         (distance (gethash expr (locals interpreter))))
     (if distance
         (env:assign-at (environment interpreter) distance name value)
         (env:assign (globals interpreter) name value))))
+
+(defevaluate ((expr syntax:expr-get))
+  (let ((object (evaluate @expr.object)))
+    (when (typep object 'lox.instance:lox-instance)
+      (lox.instance:instance-get object @expr.name))))
+
+(defevaluate ((expr syntax:expr-set))
+  (let ((object (evaluate @expr.object)))
+    (when (not (typep object 'lox.instance:lox-instance))
+      (error 'lox.error:lox-runtime-error
+             :token @expr.name
+             :message "Only instances have fields."))
+    (let ((value (evaluate @expr.value)))
+      (lox.instance:instance-set object @expr.name value)
+      value)))
 
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-expression))
   (evaluate interpreter @stmt.expression)
@@ -243,6 +268,13 @@ Compared to the book:
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
 
+(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-class))
+  (env:define (environment interpreter) @stmt.name.lexeme nil)
+  (let ((class (lox.class:make-lox-class @stmt.name.lexeme)))
+    (env:assign (environment interpreter) @stmt.name class)))
+
+;;; Printing
+
 (defun* count-enclosed-envs ((interpreter interpreter))
   "Counts the number of environments enclosed by the global."
   (let ((i 0))
@@ -252,7 +284,6 @@ Compared to the book:
       while (not (eq globals env))
       do (incf i))
     i))
-
 
 (defmethod print-object ((interpreter interpreter) out)
   (let ((enclosed-envs (count-enclosed-envs interpreter)))

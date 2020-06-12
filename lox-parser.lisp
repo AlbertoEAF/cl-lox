@@ -11,7 +11,7 @@
 
 (defclass+ parser ()
   ((tokens  :type list    :initform nil)
-   (current :type integer :initform 0)))
+   (current :type integer :initform 0 :accessor current)))
 
 (defun make-parser (tokens)
   (make-instance 'parser :tokens tokens))
@@ -39,7 +39,7 @@
 (defun* advance ((parser parser))
   "Consume and return token."
   (when (not (at-end-p parser))
-    (incf (slot-value parser 'current)))
+    (incf (current parser)))
   (previous parser))
 
 (defun* at-end-p ((parser parser))
@@ -228,11 +228,18 @@
   (let-return (expr (lox-or parser))
     (when (match parser 'ℵ:EQUAL)
       (let ((equals (previous parser)) (value (assignment parser)))
-        (if (typep expr 'syntax:var)
-            (let ((name (slot-value expr 'syntax:name)))
-              (return-from assignment (syntax:make-assign name value)))
-            (error
-             (make-lox-parse-error equals "Invalid assignment target.")))))))
+        ;; TODO: Remove the return-from. Use a cond instead!
+        (typecase expr
+          (syntax:var
+           (let ((name (syntax:name expr)))
+             (return-from assignment (syntax:make-assign name value))))
+          (syntax:expr-get
+           (let ((get expr))
+             (return-from assignment
+               (syntax:make-expr-set (syntax:object get) (syntax:name get) value))))
+          (t
+           (error
+            (make-lox-parse-error equals "Invalid assignment target."))))))))
 
 (defun* lox-or ((parser parser))
   (let-return (expr (lox-and parser))
@@ -322,8 +329,15 @@
 
 (defun* lox-call ((parser parser))
   (let-return (expr (primary parser))
-    (loop while (match parser 'ℵ:LEFT_PAREN)
-          do (setf expr (finish-lox-call parser expr)))))
+    (loop
+      while t
+      do
+         (cond ((match parser 'ℵ:LEFT_PAREN)
+                (setf expr (finish-lox-call parser expr)))
+               ((match parser 'ℵ:DOT)
+                (let ((name (consume parser 'ℵ:IDENTIFIER "Expect propert name after '.'.")))
+                  (setf expr (syntax:make-expr-get expr name))))
+               (t (loop-finish))))))
 
 (defun* finish-lox-call ((parser parser) (callee syntax:expr))
   (let ((arguments))
