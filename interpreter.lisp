@@ -210,6 +210,9 @@ Compared to the book:
       (lox.instance:instance-set object @expr.name value)
       value)))
 
+(defevaluate ((expr syntax:this))
+  (lookup-variable interpreter @expr.kword expr))
+
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-expression))
   (evaluate interpreter @stmt.expression)
   nil)

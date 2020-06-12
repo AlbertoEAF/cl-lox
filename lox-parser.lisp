@@ -363,6 +363,8 @@
       ((match 'ℵ:NIL)   (syntax:make-literal :null))
       ((match 'ℵ:NUMBER 'ℵ:STRING)
        (syntax:make-literal (token:get-literal (previous))))
+      ((match 'ℵ:THIS)
+       (syntax:make-this (previous)))
       ((match 'ℵ:IDENTIFIER)
        (syntax:make-var (previous)))
       ((match 'ℵ:LEFT_PAREN)

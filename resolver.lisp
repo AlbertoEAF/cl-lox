@@ -13,11 +13,13 @@
        ,@body)))
 
 (defun current-function-type-p (x)
-  (member x '(:NONE :FUNCTION :METHOD)
-          :test 'eq))
+  (member x '(:NONE :FUNCTION :METHOD) :test 'eq))
 
 (deftype current-function-type ()
   `(satisfies current-function-type-p))
+
+(defun class-type-p (x) (member x '(:NONE :CLASS) :test 'eq))
+(deftype class-type () `(satisfies class-type-p))
 
 (defclass+ resolver ()
   ((interpreter :type lox.interpreter.def:interpreter)
@@ -27,7 +29,11 @@
    (current-function :type current-function-type
                      :initform :NONE
                      :accessor current-function
-                     :documentation "Marks :NONE, :FUNCTION, :METHOD to know the current scope.")))
+                     :documentation "Indicates if we're inside a function.")
+   (current-class :type class-type
+                  :initform :NONE
+                  :accessor current-class
+                  :documentation "Indicates if we're inside a class.")))
 
 (defun* make-resolver ((interpreter lox.interpreter.def:interpreter))
   (make-instance 'resolver :interpreter interpreter))
@@ -185,11 +191,17 @@
   (resolve (right expr)))
 
 (defresolve ((stmt syntax:stmt-class))
-  (declare-in-scope @stmt.name)
-  (define-in-scope @stmt.name)
-  (loop for method in @stmt.methods do
-    (let ((declaration :METHOD))
-      (resolve-function resolver method declaration))))
+  (let ((enclosing-class (current-class resolver)))
+    (setf (current-class resolver) :CLASS)
+    (declare-in-scope @stmt.name)
+    (define-in-scope @stmt.name)
+    (begin-scope)
+    (setf (gethash "this" (car (scopes resolver))) t)
+    (loop for method in @stmt.methods do
+      (let ((declaration :METHOD))
+        (resolve-function resolver method declaration)))
+    (end-scope)
+    (setf (current-class resolver) enclosing-class)))
 
 (defresolve ((expr syntax:expr-get))
   (resolve (object expr)))
@@ -197,3 +209,9 @@
 (defresolve ((expr syntax:expr-set))
   (resolve @expr.value)
   (resolve @expr.object))
+
+(defresolve ((expr syntax:this))
+  (if (eq :NONE (current-class resolver))
+      (lox.error:lox-error @expr.kword
+                           "Cannot use 'this' outside of a class.")
+      (resolve-local expr @expr.kword)))

@@ -1,6 +1,6 @@
 (defpackage :lox.function
-  (:use :cl :defclass+ :lox.interpreter.def :lox.callable :lox.function.def)
-  (:export :lox-function :make-lox-function)
+  (:use :cl :lox-cl :lox.interpreter.def :lox.callable :lox.function.def)
+  (:export :lox-function :make-lox-function :bind)
   (:local-nicknames (#:env #:lox.environment)
                     (#:ℑ.def #:lox.interpreter.def)
                     (#:ℑ.build #:lox.interpreter.build)))
@@ -25,6 +25,12 @@
 
 (defmethod lox-callable-arity ((callee lox-function))
   (length @callee.declaration.params))
+
+(defun* bind ((method lox-function) instance)
+  "Instance is of type lox.instance:lox-instance."
+  (let ((env (env:make-environment @method.closure)))
+    (env:define env "this" instance)
+    (make-lox-function @method.declaration env)))
 
 (defmethod print-object ((lox-function lox-function) out)
   (with-slots (declaration) lox-function

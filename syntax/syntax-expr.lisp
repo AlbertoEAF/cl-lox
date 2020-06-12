@@ -14,8 +14,9 @@
    :call     :make-call
    :expr-get :make-expr-get
    :expr-set :make-expr-set
+   :this     :make-this
    ;; Accessors
-   :left :right :operator :expression :value :assign :name :callee :paren :arguments :object))
+   :left :right :operator :expression :value :assign :name :callee :paren :arguments :object :kword))
 (in-package :lox.syntax.expr)
 (proclaim '(optimize safety))
 
@@ -68,6 +69,9 @@
   ((object :type expr)
    (name :type token)
    (value :type expr)))
+
+(defsyntax this (expr)
+  ((kword :type token)))
 
 ;;; Printing
 

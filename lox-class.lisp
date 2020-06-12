@@ -60,7 +60,7 @@
         (let ((method (lox-find-method (lox-class instance)
                                        (lox.token:get-lexeme name))))
           (if method
-              method
+              (lox.function:bind method instance)
               (error 'lox.error:lox-runtime-error
                      :token name
                      :message (format nil "Undefined property '~A'."
