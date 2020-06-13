@@ -1,10 +1,40 @@
 # cl-lox
-cl-lox is a fast fully-compliant Common Lisp implementation of Lox with additional extensions.
+cl-lox is a fast fully-compliant [Lox](https://www.craftinginterpreters.com/the-lox-language.html) language implementation in Common Lisp with extra *goodies*.
 
-Lox is the language created by Robert Nystrom which is detailed in the excellent Crafting interpreters book: https://craftinginterpreters.com/contents.html
+*If you're curious check the amazing [Crafting Interpreters book](https://craftinginterpreters.com/contents.html) to learn how to write a fully featured language from scratch.*
 
-The master branch always contains the latest stable release.
-You can already use it, it's stable.
+# Installation
+
+Run cl-lox inside a docker container or install it on your machine.
+
+### Docker Environment
+
+Spin up a docker container with cl-lox:
+```bash
+bash run.sh
+```
+The first run takes longer, but then it's very fast.
+
+### Local Installation
+
+With [Roswell](https://github.com/roswell/roswell) you don't even need to clone the repo, just run:
+
+```bash
+ros install albertoeaf/cl-lox
+```
+
+You can also install manually using Quicklisp or ASDF.
+
+
+# Usage
+
+```bash
+# Calling lox scripts (this demo prints the first 20 fibonacci numbers):
+cl-lox --script demos/demo6-fun-fib.lox
+
+# Running the interpreter (every empty line triggers the commands before to run):
+cl-lox
+```
 
 # Language extensions
 
@@ -16,40 +46,8 @@ Standard Library:
 - readline() -> reads a string from the user
 - readfile(path) -> whole file as a string
 
-Under test:
-- For now, `+` applies to mix of strings and numbers.
-  - Although practical I might remove it to avoid silent errors like in JavaScript.
-
-# Installation
-
-There are 3 options. Install manually, through roswell or run inside docker.
-
-If you're familiar with Lisp, we recommend installation through Roswell as its the fastest way to get working and you don't even need to clone the repo:
-
-```bash
-# Install
-ros install albertoeaf/cl-lox
-```
-
-If instead you prefer a docker environment just use `run.sh`, it will take a while for the first time, but then be very fast:
-```bash
-# Launch environment
-bash run.sh
-
-cl-lox --script myscript.lox
-```
-
-If not, you can install manually.
-
-# Usage
-
-```bash
-# Calling lox scripts:
-cl-lox --script myscript.lox
-
-# Running the interpreter (2 enters to finish a prompt):
-cl-lox
-```
+Extensions:
+- `+` can sum numbers or concatenate strings with numbers.
 
 
 
