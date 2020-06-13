@@ -13,7 +13,7 @@
        ,@body)))
 
 (defun current-function-type-p (x)
-  (member x '(:NONE :FUNCTION :METHOD) :test 'eq))
+  (member x '(:NONE :FUNCTION :METHOD :INITIALIZER) :test 'eq))
 
 (deftype current-function-type ()
   `(satisfies current-function-type-p))
@@ -158,10 +158,14 @@
   (resolve @stmt.expression))
 
 (defresolve ((stmt syntax:stmt-return))
-  (when (eq :NONE (current-function resolver))
-    (lox.error:lox-error @stmt.stmt-keyword "Cannot return from top-level code."))
-  (when-it @stmt.value
-    (resolve it)))
+  (case (current-function resolver)
+    (:NONE
+     (lox.error:lox-error @stmt.stmt-keyword "Cannot return from top-level code."))
+    (:INITIALIZER
+     (lox.error:lox-error @stmt.stmt-keyword "Cannot return a value from an initializer."))
+    (t
+     (when-it @stmt.value
+       (resolve it)))))
 
 (defresolve ((stmt syntax:stmt-while))
   (resolve @stmt.stmt-condition)
@@ -198,7 +202,9 @@
     (begin-scope)
     (setf (gethash "this" (car (scopes resolver))) t)
     (loop for method in @stmt.methods do
-      (let ((declaration :METHOD))
+      (let ((declaration (if (equal "init" @method.name.lexeme)
+                             :INITIALIZER
+                             :METHOD)))
         (resolve-function resolver method declaration)))
     (end-scope)
     (setf (current-class resolver) enclosing-class)))

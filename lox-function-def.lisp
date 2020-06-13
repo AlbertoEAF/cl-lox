@@ -7,4 +7,6 @@
 
 (defclass++ lox-function (lox-callable)
   ((declaration :type lox.syntax.stmt:stmt-function)
-   (closure :type lox.environment:environment)))
+   (closure :type lox.environment:environment)
+   (is-initializer :type boolean
+                   :reader is-initializer)))

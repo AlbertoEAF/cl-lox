@@ -36,13 +36,22 @@
       (gethash name (methods class))
     (if value-p value)))
 
-(defmethod lox-call ((callee lox-class)
+(defmethod lox-call ((class lox-class)
                      (interpreter lox.interpreter.def:interpreter)
                      (arguments list))
-  (lox.instance:make-lox-instance callee))
+  (let ((instance (lox.instance:make-lox-instance class))
+        (initializer (lox-find-method class "init")))
+    (when initializer
+      (lox-call (lox.function:bind initializer instance)
+                interpreter
+                arguments))
+    instance))
 
-(defmethod lox-callable-arity ((callee lox-class))
-  0)
+(defmethod lox-callable-arity ((class lox-class))
+  (let ((initializer (lox-find-method class "init")))
+    (if initializer
+        (lox-callable-arity initializer)
+        0)))
 
 (defmethod print-object ((class lox-class) out)
   (format out "<Class ~A>" (name class)))

@@ -20,8 +20,13 @@
     (handler-case
         (ℑ.def:execute-block interpreter @declaration.body call-env)
       (lox-return (lox-ret)
-        (return-from lox-call @lox-ret.value)))
-    nil))
+        (return-from lox-call
+          (if (lox.function.def::is-initializer callee)
+            (env:get-value-at @callee.closure 0 "this")
+            @lox-ret.value))))
+    (if (lox.function.def::is-initializer callee)
+        (env:get-value-at @callee.closure 0 "this")
+        nil)))
 
 (defmethod lox-callable-arity ((callee lox-function))
   (length @callee.declaration.params))
@@ -30,7 +35,8 @@
   "Instance is of type lox.instance:lox-instance."
   (let ((env (env:make-environment @method.closure)))
     (env:define env "this" instance)
-    (make-lox-function @method.declaration env)))
+    (make-lox-function @method.declaration env
+                       (lox.function.def::is-initializer method))))
 
 (defmethod print-object ((lox-function lox-function) out)
   (with-slots (declaration) lox-function

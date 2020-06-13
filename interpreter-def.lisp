@@ -4,7 +4,8 @@
   (:export
    :interpreter :environment :globals :locals
    :evaluate :execute :execute-block
-   :lox-return :make-lox-return)
+   :lox-return :make-lox-return
+   :is-initializer)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
                     (#:tok-type #:lox.token.types)

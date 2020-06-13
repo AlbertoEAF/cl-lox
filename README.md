@@ -40,5 +40,5 @@ If not, you can install manually, and a dockerized version will also be made ava
 - [ ] Add install documentation
   - [ ] Add install instructions for Roswell
   - [ ] Add install through docker for those less
-- [ ] Finish implementing chapter 12
+- [x] Finish implementing chapter 12
 - [ ] Finish implementing chapter 13

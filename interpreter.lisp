@@ -220,7 +220,7 @@ Compared to the book:
 (defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
   "Implements visitFunctionStmt."
   (let* ((env (environment interpreter))
-         (fn (lox.function:make-lox-function stmt env)))
+         (fn (lox.function:make-lox-function stmt env nil)))
     (env:define env @stmt.name.lexeme fn))
   nil)
 
@@ -276,7 +276,9 @@ Compared to the book:
   (let ((methods (make-hash-table :test #'equal)))
     (dolist (method @stmt.methods)
       (setf (gethash @method.name.lexeme methods)
-            (lox.function:make-lox-function method (environment interpreter))))
+            (lox.function:make-lox-function method
+                                            (environment interpreter)
+                                            (equal "init" @method.name.lexeme))))
     (let ((class (lox.class:make-lox-class @stmt.name.lexeme methods)))
       (env:assign (environment interpreter) @stmt.name class))))
 

@@ -1,0 +1,29 @@
+class Bacon {
+  init () {
+    print "Creating bacon!";
+    this.slices = 2;
+  }
+
+  eat() {
+    if (this.slices > 0) {
+      this.slices = this.slices - 1;
+      print "Crunch crunch crunch!";
+    }
+    this.left();
+  }
+
+  left() {
+    print "Only " + this.slices + " slice(s) left of me!";
+  }
+}
+
+var bacon = Bacon();
+
+bacon.eat(); // Prints "Crunch crunch crunch!".
+bacon.eat(); // Prints "Crunch crunch crunch!".
+bacon.eat(); // No more bacon!
+
+print "Adding 3 slices of bacon!";
+bacon.slices = 3;
+var call = bacon.left; // capture a method + this closure
+call(); // print!
