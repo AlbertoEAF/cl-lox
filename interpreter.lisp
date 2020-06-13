@@ -116,7 +116,7 @@ Compared to the book:
                (eql obj :null))
            "Nil")
           ((typep obj 'number) (lox-number-string-repr obj))
-          (t (format nil "~S" obj)))))
+          (t (format nil "~A" obj)))))
 
 (defevaluate ((expr syntax:binary))
   (let* ((left (evaluate  @expr.left))
