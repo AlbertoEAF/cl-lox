@@ -82,6 +82,10 @@
     (setf (gethash @name.lexeme it)
           t)))
 
+(defun* force-define-in-scope ((resolver resolver) (name string))
+  (setf (gethash name (car (scopes resolver)))
+        t))
+
 (defun* resolve-local ((resolver resolver) (expr syntax:expr) (name lox.token:token))
   "Variable was checked to be defined in a scope.
    Resolve the local variable by determining which scope (how many jumps away)."
@@ -201,13 +205,17 @@
     (declare-in-scope @stmt.name)
     (define-in-scope @stmt.name)
 
-    (when (and @stmt.superclass
-               (equal @stmt.name.lexeme @stmt.superclass.name.lexeme))
-      (lox.error:lox-error @stmt.superclass.name
-                           "A class cannot inherit from itself."))
-
     (when @stmt.superclass
+
+      (when (equal @stmt.name.lexeme @stmt.superclass.name.lexeme)
+        (lox.error:lox-error @stmt.superclass.name
+                             "A class cannot inherit from itself."))
+
+      (begin-scope)
+      (force-define-in-scope resolver "super")
+
       (resolve @stmt.superclass))
+
     (begin-scope)
     (setf (gethash "this" (car (scopes resolver))) t)
     (loop for method in @stmt.methods do
@@ -216,6 +224,8 @@
                              :METHOD)))
         (resolve-function resolver method declaration)))
     (end-scope)
+    (when @stmt.superclass
+      (end-scope))
     (setf (current-class resolver) enclosing-class)))
 
 
@@ -231,3 +241,6 @@
       (lox.error:lox-error @expr.kword
                            "Cannot use 'this' outside of a class.")
       (resolve-local expr @expr.kword)))
+
+(defresolve ((expr syntax:super))
+  (resolve-local expr @expr.kword))

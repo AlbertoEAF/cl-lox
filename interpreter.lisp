@@ -1,5 +1,7 @@
 (defpackage :lox.interpreter
-  (:use :cl :lox-cl :lox.interpreter.def :lox.interpreter.build)
+  (:use :cl :lox-cl
+        :lox.interpreter.def :lox.interpreter.build
+        :lox.class :lox.function)
   (:export :interpret :make-interpreter)
   (:local-nicknames (#:syntax #:lox.syntax)
                     (#:token  #:lox.token)
@@ -261,22 +263,43 @@ Compared to the book:
       (lox.error:lox-runtime-error e))))
 
 (defexecute ((stmt syntax:stmt-class))
-  (let ((superclass))
+  (let ((environment (environment interpreter))
+        (superclass))
     (when @stmt.superclass
       (setf superclass (evaluate @stmt.superclass))
-      (when (not (typep superclass 'lox.class:lox-class))
+      (when (not (typep superclass 'lox-class))
         (error 'lox.error:lox-runtime-error
                :token @stmt.superclass.name
                :message "Superclass must be a class.")))
-    (env:define (environment interpreter) @stmt.name.lexeme)
-    (let ((methods (make-hash-table :test #'equal)))
-      (dolist (method @stmt.methods)
-        (setf (gethash @method.name.lexeme methods)
-              (lox.function:make-lox-function method
-                                              (environment interpreter)
-                                              (equal "init" @method.name.lexeme))))
-      (let ((class (lox.class:make-lox-class @stmt.name.lexeme superclass methods)))
-        (env:assign (environment interpreter) @stmt.name class)))))
+    (env:define environment @stmt.name.lexeme)
+
+    (let ((class-env (if superclass
+                         (env:make-environment environment)
+                         environment)))
+      (when superclass
+          (env:define class-env "super" superclass))
+    
+      (let ((methods (make-hash-table :test #'equal)))
+        (dolist (method @stmt.methods)
+          (setf (gethash @method.name.lexeme methods)
+                (make-lox-function method
+                                   class-env
+                                   (equal "init" @method.name.lexeme))))
+        (let ((class (make-lox-class @stmt.name.lexeme superclass methods)))
+          (env:assign environment @stmt.name class))))))
+
+(defevaluate ((expr syntax:super))
+  (let* ((distance (gethash expr (locals interpreter)))
+         (superclass (env:get-value-at (environment interpreter) distance "super"))
+         ;; "this"'s environment is always enclosed by the "super"'s environment (distance-1)
+         ;; and "this" refers to the instance/object itself:
+         (object (env:get-value-at (environment interpreter) (1- distance) "this"))
+         (method (lox-find-method superclass @expr.lox-method.lexeme)))
+    (if method
+        (bind method object)
+        (error 'lox.error:lox-runtime-error
+               :token @expr.lox-method
+               :message (format nil "Undefined property '~A'." @expr.lox-method.lexeme)))))
 
 ;;; Printing
 
