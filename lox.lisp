@@ -76,7 +76,7 @@
       (when (and stop-on-error
                  (or lox.error::*had-error*
                      lox.error::*had-runtime-error*))
-        (format t "Found error in demo. Aborting. Set :stop-on-error to nil to ignore errors.~%")
+        (format t "Found error in demo. Aborting.~% Set :stop-on-error to nil to run all demos even when there are errors.~%")
         (return)))))
 
 (defun run-prompt ()

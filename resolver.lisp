@@ -18,7 +18,7 @@
 (deftype current-function-type ()
   `(satisfies current-function-type-p))
 
-(defun class-type-p (x) (member x '(:NONE :CLASS) :test 'eq))
+(defun class-type-p (x) (member x '(:NONE :CLASS :SUBCLASS) :test 'eq))
 (deftype class-type () `(satisfies class-type-p))
 
 (defclass+ resolver ()
@@ -141,8 +141,8 @@
   (when-it (car (scopes resolver))
     (multiple-value-bind (value present-p) (gethash @expr.name.lexeme it)
       (when (and present-p (null value))
-        (error 'lox.error::lox-error :token (name expr)
-                                     :message "Cannot read local variable in its own initializer."))))
+        (lox.error::lox-error (name expr)
+                              "Cannot read local variable in its own initializer."))))
   (resolve-local expr (name expr)))
 
 (defresolve ((expr syntax:assign))
@@ -206,14 +206,13 @@
     (define-in-scope @stmt.name)
 
     (when @stmt.superclass
-
       (when (equal @stmt.name.lexeme @stmt.superclass.name.lexeme)
         (lox.error:lox-error @stmt.superclass.name
                              "A class cannot inherit from itself."))
 
       (begin-scope)
       (force-define-in-scope resolver "super")
-
+      (setf (current-class resolver) :SUBCLASS)
       (resolve @stmt.superclass))
 
     (begin-scope)
@@ -243,4 +242,10 @@
       (resolve-local expr @expr.kword)))
 
 (defresolve ((expr syntax:super))
-  (resolve-local expr @expr.kword))
+  (case (current-class resolver)
+    (:SUBCLASS
+     (resolve-local expr @expr.kword))
+    (:NONE 
+     (lox.error:lox-error @expr.kword "Cannot use 'super' outside of a class."))
+    (t ;; :CLASS
+     (lox.error:lox-error @expr.kword "Cannot use 'super' in a class with no superclass."))))
