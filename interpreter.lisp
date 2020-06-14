@@ -30,7 +30,7 @@
     (if (typep (first forms) 'string)
         (setf documentation (first body-forms)
               body-forms    (rest body-forms)))
-    `(defmethod evaluate ,all-args
+    `(defmethod execute ,all-args
        ,(or documentation "")
        (with-curry (evaluate execute) interpreter
          (declare (ignorable #'evaluate #'execute))
@@ -213,55 +213,44 @@ Compared to the book:
 (defevaluate ((expr syntax:this))
   (lookup-variable interpreter @expr.kword expr))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-expression))
-  (evaluate interpreter @stmt.expression)
-  nil)
+(defexecute ((stmt syntax:stmt-expression))
+  (evaluate @stmt.expression))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-function))
+(defexecute ((stmt syntax:stmt-function))
   "Implements visitFunctionStmt."
   (let* ((env (environment interpreter))
          (fn (lox.function:make-lox-function stmt env nil)))
-    (env:define env @stmt.name.lexeme fn))
-  nil)
+    (env:define env @stmt.name.lexeme fn)))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-print))
-  (format t "~A~%" (stringify (evaluate interpreter @stmt.expression)))
-  nil)
+(defexecute ((stmt syntax:stmt-print))
+  (format t "~A~%" (stringify (evaluate @stmt.expression))))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-return))
-  (let ((value (if @stmt.value (evaluate interpreter @stmt.value))))
+(defexecute ((stmt syntax:stmt-return))
+  (let ((value (if @stmt.value (evaluate @stmt.value))))
     ;; Signal with a lox-return "error" that carries the value.
     (error (make-lox-return value))))
 
+(defexecute ((stmt syntax:stmt-var-declaration))
+  (let ((value (if @stmt.initializer (evaluate @stmt.initializer))))
+    (env:define @interpreter.environment (token:get-lexeme @stmt.name) value)))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-var-declaration))
-  (let ((value (if @stmt.initializer (evaluate interpreter @stmt.initializer))))
-    (env:define @interpreter.environment (token:get-lexeme @stmt.name) value)
-    nil))
+(defexecute ((stmt syntax:stmt-while))
+  (loop while (eval-truthy-p (evaluate @stmt.stmt-condition))
+        do (execute @stmt.body)))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-while))
-  (loop while (eval-truthy-p (evaluate interpreter @stmt.stmt-condition))
-        do (execute interpreter @stmt.body))
-  nil)
-
-(defmethod execute ((interpreter interpreter) (stmt lox.syntax.stmt:stmt-block))
+(defexecute ((stmt lox.syntax.stmt:stmt-block))
   (execute-block interpreter
                  @stmt.statements
-                 (env:make-environment (environment interpreter)))
-  nil)
+                 (env:make-environment (environment interpreter))))
 
-(defmethod execute ((interpreter interpreter) (if-stmt syntax:stmt-if))
-  (cond ((eval-truthy-p (evaluate interpreter @if-stmt.stmt-condition))
-         (execute interpreter @if-stmt.then-branch))
+(defexecute ((if-stmt syntax:stmt-if))
+  (cond ((eval-truthy-p (evaluate @if-stmt.stmt-condition))
+         (execute @if-stmt.then-branch))
         (@if-stmt.else-branch
-         (execute interpreter @if-stmt.else-branch)))
-  nil)
+         (execute @if-stmt.else-branch))))
 
-(defmethod interpreter-resolve ((interpreter interpreter) (expr syntax:expr) (depth fixnum))
+(defun* interpreter-resolve ((interpreter interpreter) (expr syntax:expr) (depth fixnum))
   (setf (gethash expr @interpreter.locals) depth))
-
-;; (defmethod execute ((interpreter interpreter) (stmt syntax:stmt))
-;;    (execute stmt))
 
 (defun* interpret ((interpreter interpreter) (statements list))
   (handler-case
@@ -271,16 +260,23 @@ Compared to the book:
       ;; Call runtime error handler (function with same name as condition):
       (lox.error:lox-runtime-error e))))
 
-(defmethod execute ((interpreter interpreter) (stmt syntax:stmt-class))
-  (env:define (environment interpreter) @stmt.name.lexeme)
-  (let ((methods (make-hash-table :test #'equal)))
-    (dolist (method @stmt.methods)
-      (setf (gethash @method.name.lexeme methods)
-            (lox.function:make-lox-function method
-                                            (environment interpreter)
-                                            (equal "init" @method.name.lexeme))))
-    (let ((class (lox.class:make-lox-class @stmt.name.lexeme methods)))
-      (env:assign (environment interpreter) @stmt.name class))))
+(defexecute ((stmt syntax:stmt-class))
+  (let ((superclass))
+    (when @stmt.superclass
+      (setf superclass (evaluate @stmt.superclass))
+      (when (not (typep superclass 'lox.class:lox-class))
+        (error 'lox.error:lox-runtime-error
+               :token @stmt.superclass.name
+               :message "Superclass must be a class.")))
+    (env:define (environment interpreter) @stmt.name.lexeme)
+    (let ((methods (make-hash-table :test #'equal)))
+      (dolist (method @stmt.methods)
+        (setf (gethash @method.name.lexeme methods)
+              (lox.function:make-lox-function method
+                                              (environment interpreter)
+                                              (equal "init" @method.name.lexeme))))
+      (let ((class (lox.class:make-lox-class @stmt.name.lexeme superclass methods)))
+        (env:assign (environment interpreter) @stmt.name class)))))
 
 ;;; Printing
 

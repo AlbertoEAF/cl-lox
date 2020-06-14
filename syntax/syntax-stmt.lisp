@@ -1,6 +1,6 @@
 (defpackage :lox.syntax.stmt
   (:use :cl :defclass-std :defclass+)
-  (:import-from :lox.syntax.expr :expr :expression :defsyntax :value :name)
+  (:import-from :lox.syntax.expr :expr :expression :defsyntax :value :name :var)
   (:import-from :lox.token :token)
   (:export
    ;; Statement classes
@@ -25,7 +25,7 @@
    ;; Classes and constructors
    :stmt-class :make-stmt-class
    ;; Accessors
-   :expression :name :initializer :statements :stmt-condition :then-branch :else-branch :body :params :stmt-keyword :value :methods))
+   :expression :name :initializer :statements :stmt-condition :then-branch :else-branch :body :params :stmt-keyword :value :methods :superclass))
 (in-package :lox.syntax.stmt)
 
 (defclass+ stmt ()
@@ -65,6 +65,7 @@
 
 (defsyntax stmt-class (stmt)
   ((name :type token)
+   (superclass :type (or null var))
    (methods :type list)))
 
 (defmethod print-object ((stmt stmt) out)

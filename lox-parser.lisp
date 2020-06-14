@@ -160,13 +160,16 @@
       nil)))
 
 (defun* class-declaration ((parser parser))
-  (let ((name (consume parser 'ℵ:IDENTIFIER "Expect class name.")))
+  (let ((name (consume parser 'ℵ:IDENTIFIER "Expect class name."))
+        (superclass (when (match parser 'ℵ:LESS)
+                      (consume parser 'ℵ:IDENTIFIER "Expect superclass name.")
+                      (syntax:make-var (previous parser)))))
     (consume parser 'ℵ:LEFT_BRACE "Expect '{' before class body.")
     (let ((methods (loop until (or (check parser 'ℵ:RIGHT_BRACE)
                                    (at-end-p parser))
                          collect (function-parser parser :METHOD))))
       (consume parser 'ℵ:RIGHT_BRACE "Expect '}' after class body.")
-      (syntax:make-stmt-class name methods))))
+      (syntax:make-stmt-class name superclass methods))))
 
 (defun* while-statement ((parser parser))
   (consume parser 'ℵ:LEFT_PAREN "Expect '(' after 'while'.")

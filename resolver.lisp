@@ -194,11 +194,20 @@
 (defresolve ((expr syntax:unary))
   (resolve (right expr)))
 
+
 (defresolve ((stmt syntax:stmt-class))
   (let ((enclosing-class (current-class resolver)))
     (setf (current-class resolver) :CLASS)
     (declare-in-scope @stmt.name)
     (define-in-scope @stmt.name)
+
+    (when (and @stmt.superclass
+               (equal @stmt.name.lexeme @stmt.superclass.name.lexeme))
+      (lox.error:lox-error @stmt.superclass.name
+                           "A class cannot inherit from itself."))
+
+    (when @stmt.superclass
+      (resolve @stmt.superclass))
     (begin-scope)
     (setf (gethash "this" (car (scopes resolver))) t)
     (loop for method in @stmt.methods do
@@ -208,6 +217,7 @@
         (resolve-function resolver method declaration)))
     (end-scope)
     (setf (current-class resolver) enclosing-class)))
+
 
 (defresolve ((expr syntax:expr-get))
   (resolve (object expr)))

@@ -1,11 +1,13 @@
 (defpackage :lox.class
   (:use :cl :lox-cl :lox.callable)
-  (:export :lox-class :make-lox-class :methods :lox-find-method))
+  (:export :lox-class :make-lox-class :methods :lox-find-method :superclass))
 (in-package :lox.class)
 
 (defclass++ lox-class (lox-callable)
   ((name :type string
          :accessor name)
+   (superclass :type (or null lox-class)
+               :accessor superclass)
    (methods :type hash-table
             :accessor methods)))
 
@@ -34,7 +36,11 @@
   "Returns the method or nil if not defined."
   (multiple-value-bind (value value-p)
       (gethash name (methods class))
-    (if value-p value)))
+    (if value-p
+        value
+        (let ((superclass (superclass class)))
+          (if superclass
+              (lox-find-method superclass name))))))
 
 (defmethod lox-call ((class lox-class)
                      (interpreter lox.interpreter.def:interpreter)
