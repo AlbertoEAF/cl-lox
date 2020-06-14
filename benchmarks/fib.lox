@@ -1,8 +1,9 @@
-fun fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 2) + fibonacci(n - 1);
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 1) + fib(n - 2);
 }
 
-for (var i = 0; i < 29; i = i + 1) {
-  print fibonacci(i);
-}
+var before = clock();
+print fib(40);
+var after = clock();
+print after - before;
