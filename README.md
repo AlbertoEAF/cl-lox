@@ -36,6 +36,52 @@ cl-lox --script demos/demo6-fun-fib.lox
 cl-lox
 ```
 
+# Demos
+
+You can try out all the demos without installing by using docker:
+```bash
+bash run.sh # spin up a docker instance with cl-lox
+ros run # start a Lisp environment
+```
+Now run the following commands inside the Lisp environment:
+
+```common-lisp
+;; Load cl-lox:
+(asdf:make :cl-lox)
+;; Run all the demos and time it:
+(time (lox:run-demos "demos/"))
+```
+You should see the outputs of the several demos and the total time:
+
+```bash
+...
+
+Creating bacon!
+Crunch crunch crunch!
+Only 1 slice(s) left of me!
+Crunch crunch crunch!
+Only 0 slice(s) left of me!
+Only 0 slice(s) left of me!
+Adding 3 slices of bacon!
+Only 3 slice(s) left of me!
+NIL
+
+
+------------------------ Demo demo9-class-inheritance -------------------------
+Running file /home/alberto.ferreira/code/external/AlbertoEAF/cl-lox/demos/demo9-class-inheritance.lox.
+
+Fry until golden brown.
+Pipe full of custard and coat with chocolate.
+NIL
+Evaluation took:
+  0.164 seconds of real time
+  0.164993 seconds of total run time (0.161349 user, 0.003644 system)
+  [ Run times consist of 0.005 seconds GC time, and 0.160 seconds non-GC time. ]
+  100.61% CPU
+  477,229,056 processor cycles
+  68,793,072 bytes consed
+```
+
 # Language extensions
 
 Safety:

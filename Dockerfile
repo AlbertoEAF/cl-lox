@@ -1,12 +1,12 @@
 FROM albertoeafworks/roswell
 
-RUN mkdir cl-lox
+RUN mkdir -p cl-lox/src
 WORKDIR cl-lox
 
 # Setup the libraries separately for faster image rebuilds.
-COPY cl-lox.asd .
+COPY src/cl-lox.asd src/
 RUN echo "Installing cl-lox libraries..." \
- && ros run --eval '(ql:quickload (getf (uiop:read-file-form "cl-lox.asd") :depends-on)) (exit)'
+ && ros run --eval '(ql:quickload (getf (uiop:read-file-form "src/cl-lox.asd") :depends-on)) (exit)'
 
 # Compile for fast execution
 COPY . .
