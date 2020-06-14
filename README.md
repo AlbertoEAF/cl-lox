@@ -1,7 +1,7 @@
 # cl-lox
 cl-lox is a fast fully-compliant [Lox](https://www.craftinginterpreters.com/the-lox-language.html) language implementation in Common Lisp with extra *goodies*.
 
-*If you're curious check the amazing [Crafting Interpreters book](https://craftinginterpreters.com/contents.html) to learn how to write a fully featured language from scratch.*
+If you're curious check the [Crafting Interpreters book](https://craftinginterpreters.com/contents.html) and learn how to write a complete language from scratch.
 
 # Installation
 
@@ -51,6 +51,9 @@ Extensions:
 
 
 
-# TODO
+# Future work
 
-- [ ] Finish implementing chapter 13
+For now I'm happy with it, but I might decide later to:
+- Add enhancements to the language.
+- Extend standard library.
+- Further benchmark and improve performance.
