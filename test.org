@@ -1,0 +1,271 @@
+Benchmark
+
+* with full optimization takes 1260s
+
+5da30cc4eda7890a6f3b58dddc34240d02a8717c
+
+| Branch | Commit                                   | Time | Optimization Level |
+|--------+------------------------------------------+------+--------------------|
+| master | defc6340bcb262e8bb105b5dd357eda1d78f17a9 | 1260 | Full               |
+|        |                                          |      |                    |
+
+** statistical profiling
+
+           Self        Total        Cumul
+  Nr  Count     %  Count     %  Count     %    Calls  Function
+------------------------------------------------------------------------
+   1    106  10.6    106  10.6    106  10.6        -  SB-PCL::FIND-SLOT-CELL
+   2     81   8.1     81   8.1    187  18.7        -  (LAMBDA (SB-PCL::.ARG0. SB-PCL::.ARG1.) :IN "SYS:SRC;PCL;DLISP3.LISP")
+   3     71   7.1     71   7.1    258  25.8        -  (LAMBDA (SB-KERNEL:INSTANCE) :IN SB-PCL::MAKE-OPTIMIZED-STD-READER-METHOD-FUNCTION)
+   4     70   7.0     70   7.0    328  32.8        -  (LAMBDA (SB-PCL::.PV. SB-PCL::.NEXT-METHOD-CALL. SB-PCL::.ARG0. SB-PCL::.ARG1.) :IN "/home/alberto.ferreira/.roswell/impls/x86-64/linux/sbcl/2.0.5/lib/sbcl/contrib/asdf.fasl")
+   5     63   6.3    235  23.5    391  39.1        -  SLOT-VALUE
+   6     51   5.1     51   5.1    442  44.2        -  (LAMBDA (SB-PCL::.ARG0.) :IN "SYS:SRC;PCL;DLISP3.LISP")
+   7     32   3.2     32   3.2    474  47.4        -  (LAMBDA (SB-PCL::.PV. SB-PCL::.NEXT-METHOD-CALL. SB-KERNEL:INSTANCE) :IN SB-PCL::MAKE-STD-READER-METHOD-FUNCTION)
+   8     25   2.5   1020 102.0    499  49.9        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EVALUATE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.EXPR:BINARY))
+   9     25   2.5     32   3.2    524  52.4        -  MAKE-HASH-TABLE
+  10     23   2.3     23   2.3    547  54.7        -  (LAMBDA (SB-PCL::.PV. SB-PCL::.NEXT-METHOD-CALL. SB-PCL::.ARG0. SB-PCL::.ARG1.))
+  11     22   2.2     22   2.2    569  56.9        -  SB-KERNEL:CLASSOID-TYPEP
+  12     19   1.9     78   7.8    588  58.8        -  (SB-PCL::EMF (SETF SB-MOP:SLOT-VALUE-USING-CLASS))
+  13     18   1.8     18   1.8    606  60.6        -  "#<code id=0 [0] {5200000F}>"
+  14     15   1.5     15   1.5    621  62.1        -  (LAMBDA (#:G32 RUTILS.GENERIC::_) :IN RUTILS.GENERIC:SMART-SLOT-VALUE)
+  15     15   1.5     15   1.5    636  63.6        -  (LAMBDA (SB-PCL::.ARG0. SB-PCL::.ARG1. SB-PCL::.ARG2.) :IN "SYS:SRC;PCL;DLISP3.LISP")
+  16     14   1.4     47   4.7    650  65.0        -  SB-KERNEL:SPECIFIER-TYPE
+  17     14   1.4     22   2.2    664  66.4        -  SB-IMPL::GET-INFO-VALUE
+  18     14   1.4     19   1.9    678  67.8        -  (LABELS SB-KERNEL::RECURSE :IN SB-KERNEL:%%TYPEP)
+  19     13   1.3     35   3.5    691  69.1        -  SB-IMPL::GETHASH/EQUAL
+  20     12   1.2     12   1.2    703  70.3        -  SB-PCL::VALID-WRAPPER-OF
+  21     11   1.1     32   3.2    714  71.4        -  SB-KERNEL::BASIC-PARSE-TYPESPEC
+  22     10   1.0     12   1.2    724  72.4        -  SB-PCL::SETF-SLOT-VALUE-USING-CLASS-DFUN
+  23     10   1.0     10   1.0    734  73.4        -  SB-IMPL::GETHASH/EQ
+  24      9   0.9   1004 100.4    743  74.3        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EVALUATE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.EXPR:CALL))
+  25      9   0.9    150  15.0    752  75.2        -  LOX.INTERPRETER::LOOKUP-VARIABLE
+  26      9   0.9     27   2.7    761  76.1        -  MAKE-CONDITION
+  27      9   0.9     13   1.3    770  77.0        -  SB-KERNEL:STRING=*
+  28      8   0.8   1003 100.3    778  77.8        -  (FLET LOX.INTERPRETER.DEF:EVALUATE :IN LOX.INTERPRETER.DEF:EVALUATE)
+  29      8   0.8     99   9.9    786  78.6        -  (LAMBDA (SB-PCL::|.P0.|))
+  30      8   0.8     34   3.4    794  79.4        -  LOX.INTERPRETER::TYPE?
+  31      8   0.8      8   0.8    802  80.2        -  SB-IMPL::PACKED-INFO-VALUE-INDEX
+  32      7   0.7     60   6.0    809  80.9        -  SB-PCL::SET-SLOT-VALUE
+  33      7   0.7     51   5.1    816  81.6        -  (SB-PCL::FAST-METHOD (SETF SB-MOP:SLOT-VALUE-USING-CLASS) :BEFORE (T CHECKED-CLASS:CHECKED-CLASS T T))
+  34      7   0.7      7   0.7    823  82.3        -  SB-KERNEL:%SXHASH-STRING
+  35      7   0.7      7   0.7    830  83.0        -  (LAMBDA (SB-PCL::.ARG0.) :IN "SYS:SRC;PCL;BRAID.LISP")
+  36      6   0.6   1001 100.1    836  83.6        -  LOX.INTERPRETER.DEF:EXECUTE-BLOCK
+  37      6   0.6   1001 100.1    842  84.2        -  (SB-PCL::FAST-METHOD LOX.CALLABLE:LOX-CALL (LOX.FUNCTION.DEF:LOX-FUNCTION LOX.INTERPRETER.DEF:INTERPRETER LIST))
+  38      6   0.6     10   1.0    848  84.8        -  (LAMBDA (SB-PCL::NV CLASS SB-KERNEL:INSTANCE SB-PCL::SLOTD) :IN SB-PCL::MAKE-OPTIMIZED-STD-SETF-SLOT-VALUE-USING-CLASS-METHOD-FUNCTION)
+  39      6   0.6      6   0.6    854  85.4        -  SB-KERNEL:%MEMBER
+  40      5   0.5    212  21.2    859  85.9        -  (FLET LOX.INTERPRETER.DEF:EVALUATE :IN LOX.INTERPRETER.DEF:EVALUATE)
+  41      5   0.5     30   3.0    864  86.4        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EVALUATE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.EXPR:LITERAL))
+  42      5   0.5     13   1.3    869  86.9        -  (LAMBDA (SB-PCL::X) :IN SB-MOP:COMPUTE-EFFECTIVE-SLOT-DEFINITION)
+  43      5   0.5      5   0.5    874  87.4        -  SB-KERNEL:CLASSOID-CELL-TYPEP
+  44      5   0.5      5   0.5    879  87.9        -  <
+  45      5   0.5      5   0.5    884  88.4        -  SB-IMPL::GETHASH3
+  46      4   0.4    999  99.9    888  88.8        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EXECUTE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.STMT:STMT-RETURN))
+  47      4   0.4     32   3.2    892  89.2        -  LOX.ENVIRONMENT:GET-VALUE
+  48      4   0.4     14   1.4    896  89.6        -  (LABELS SB-IMPL::SXHASH-RECURSE :IN SXHASH)
+  49      4   0.4     12   1.2    900  90.0        -  ERROR
+  50      4   0.4      4   0.4    904  90.4        -  (LAMBDA (SB-KERNEL::CACHE SB-KERNEL::OBJECT) :IN SB-KERNEL::CACHED-TYPEP)
+  51      4   0.4      4   0.4    908  90.8        -  (LAMBDA (SB-PCL::NV SB-KERNEL:INSTANCE) :IN SB-PCL::GET-ACCESSOR-FROM-SVUC-METHOD-FUNCTION)
+  52      4   0.4      4   0.4    912  91.2        -  SB-KERNEL:%SP-STRING-COMPARE
+  53      3   0.3     43   4.3    915  91.5        -  (SB-PCL::FAST-METHOD LOX.ENVIRONMENT:GET-VALUE-AT (LOX.ENVIRONMENT:ENVIRONMENT FIXNUM LOX.TOKEN:TOKEN))
+  54      3   0.3     19   1.9    918  91.8        -  (SB-PCL::FAST-METHOD RUTILS.GENERIC:SMART-SLOT-VALUE (T T))
+  55      3   0.3     14   1.4    921  92.1        -  SXHASH
+  56      3   0.3      9   0.9    924  92.4        -  SB-IMPL::PUTHASH/EQUAL
+  57      3   0.3      8   0.8    927  92.7        -  SB-KERNEL:CONDITION-SLOT-VALUE
+  58      3   0.3      6   0.6    930  93.0        -  SB-KERNEL::%SIGNAL
+  59      3   0.3      3   0.3    933  93.3        -  SB-THREAD:MAKE-MUTEX
+  60      3   0.3      3   0.3    936  93.6        -  (LABELS SB-IMPL::EQUAL-AUX :IN EQUAL)
+  61      2   0.2    997  99.7    938  93.8        -  (FLET LOX.INTERPRETER.DEF:EVALUATE :IN LOX.INTERPRETER.DEF:EXECUTE)
+  62      2   0.2    289  28.9    940  94.0        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EXECUTE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.STMT:STMT-IF))
+  63      2   0.2    194  19.4    942  94.2        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EVALUATE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.EXPR:VAR))
+  64      2   0.2    177  17.7    944  94.4        -  (FLET LOX.INTERPRETER.DEF:EVALUATE :IN LOX.INTERPRETER.DEF:EXECUTE)
+  65      2   0.2     32   3.2    946  94.6        -  (SB-PCL::FAST-METHOD LOX.CALLABLE:LOX-CALLABLE-ARITY (LOX.FUNCTION.DEF:LOX-FUNCTION))
+  66      2   0.2     30   3.0    948  94.8        -  LOX.INTERPRETER::CHECK-NUMBER-OPERANDS
+  67      2   0.2     22   2.2    950  95.0        -  LOX.ENVIRONMENT:DEFINE
+  68      2   0.2     10   1.0    952  95.2        -  SB-KERNEL:ALLOCATE-CONDITION
+  69      2   0.2      9   0.9    954  95.4        -  SB-KERNEL:FIND-CLASSOID
+  70      2   0.2      7   0.7    956  95.6        -  SB-KERNEL:FIND-CLASSOID-CELL
+  71      2   0.2      5   0.5    958  95.8        -  SB-IMPL::%MAKE-HASH-TABLE
+  72      2   0.2      2   0.2    960  96.0        -  (SB-PCL::SLOT-TYPECHECK HASH-TABLE)
+  73      2   0.2      2   0.2    962  96.2        -  SB-KERNEL::FIND-CONDITION-CLASS-SLOT
+  74      2   0.2      2   0.2    964  96.4        -  SB-KERNEL::INFINITE-ERROR-PROTECTOR
+  75      2   0.2      2   0.2    966  96.6        -  "foreign function pthread_sigmask"
+  76      2   0.2      2   0.2    968  96.8        -  -
+  77      2   0.2      2   0.2    970  97.0        -  (FLET SB-IMPL::INSERT-AT :IN SB-IMPL::GET-PUTHASH-DEFINITIONS)
+  78      1   0.1    996  99.6    971  97.1        -  (FLET "FORM-FUN-16" :IN LOX.CALLABLE:LOX-CALL)
+  79      1   0.1    101  10.1    972  97.2        -  LOX.ENVIRONMENT:MAKE-ENVIRONMENT
+  80      1   0.1     59   5.9    973  97.3        -  (FLET LOX.INTERPRETER.DEF:EXECUTE :IN LOX.INTERPRETER.DEF:EXECUTE)
+  81      1   0.1     48   4.8    974  97.4        -  TYPEP
+  82      1   0.1     36   3.6    975  97.5        -  (LAMBDA NIL :IN "/home/alberto.ferreira/code/external/AlbertoEAF/cl-lox/src/environment.lisp")
+  83      1   0.1     34   3.4    976  97.6        -  (FLET "FUN13" :IN LOX.CALLABLE:LOX-CALL)
+  84      1   0.1     22   2.2    977  97.7        -  LOX.INTERPRETER.DEF:MAKE-LOX-RETURN
+  85      1   0.1     11   1.1    978  97.8        -  SB-IMPL::EQUAL-HASH
+  86      1   0.1      2   0.2    979  97.9        -  LOX.ENVIRONMENT::ANCESTOR
+  87      1   0.1      2   0.2    980  98.0        -  (SB-PCL::SLOT-TYPECHECK LOX.ENVIRONMENT:ENVIRONMENT)
+  88      1   0.1      1   0.1    981  98.1        -  GETF
+  89      1   0.1      1   0.1    982  98.2        -  SB-INT:EQUAL-BUT-NO-CAR-RECURSION
+  90      1   0.1      1   0.1    983  98.3        -  SB-KERNEL:COERCE-TO-CONDITION
+  91      1   0.1      1   0.1    984  98.4        -  SB-IMPL::PICK-TABLE-METHODS
+  92      1   0.1      1   0.1    985  98.5        -  SB-KERNEL:%SINGLE-FLOAT
+  93      1   0.1      1   0.1    986  98.6        -  LOX.INTERPRETER::TRUTHY-P
+  94      1   0.1      1   0.1    987  98.7        -  SB-IMPL::%PUTF
+  95      1   0.1      1   0.1    988  98.8        -  SB-INT:FP-ZERO-P
+  96      0   0.0    995  99.5    988  98.8        -  (FLET LOX.INTERPRETER.DEF:EVALUATE :IN LOX.INTERPRETER.DEF:EXECUTE)
+  97      0   0.0    995  99.5    988  98.8        -  (SB-PCL::FAST-METHOD LOX.INTERPRETER.DEF:EXECUTE (LOX.INTERPRETER.DEF:INTERPRETER LOX.SYNTAX.STMT:STMT-PRINT))
+  98      0   0.0    995  99.5    988  98.8        -  (FLET "FORM-FUN-16" :IN LOX.INTERPRETER:INTERPRET)
+  99      0   0.0    995  99.5    988  98.8        -  LOX.INTERPRETER:INTERPRET
+ 100      0   0.0    995  99.5    988  98.8        -  LOX:RUN
+ 101      0   0.0    995  99.5    988  98.8        -  "Unknown component: #x52E65058"
+ 102      0   0.0    995  99.5    988  98.8        -  SWANK::EVAL-REGION
+ 103      0   0.0    995  99.5    988  98.8        -  (LAMBDA NIL :IN SWANK-REPL::REPL-EVAL)
+ 104      0   0.0    995  99.5    988  98.8        -  SWANK-REPL::TRACK-PACKAGE
+ 105      0   0.0    995  99.5    988  98.8        -  SWANK::CALL-WITH-RETRY-RESTART
+ 106      0   0.0    995  99.5    988  98.8        -  SWANK::CALL-WITH-BUFFER-SYNTAX
+ 107      0   0.0    995  99.5    988  98.8        -  SWANK-REPL::REPL-EVAL
+ 108      0   0.0    995  99.5    988  98.8        -  SB-INT:SIMPLE-EVAL-IN-LEXENV
+ 109      0   0.0    995  99.5    988  98.8        -  EVAL
+ 110      0   0.0    995  99.5    988  98.8        -  SWANK:EVAL-FOR-EMACS
+ 111      0   0.0    995  99.5    988  98.8        -  SWANK::PROCESS-REQUESTS
+ 112      0   0.0    995  99.5    988  98.8        -  (LAMBDA NIL :IN SWANK::HANDLE-REQUESTS)
+ 113      0   0.0    995  99.5    988  98.8        -  SWANK/SBCL::CALL-WITH-BREAK-HOOK
+ 114      0   0.0    995  99.5    988  98.8        -  (FLET SWANK/BACKEND:CALL-WITH-DEBUGGER-HOOK :IN "/home/alberto.ferreira/.roswell/lisp/slime/2020.04.27/swank/sbcl.lisp")
+ 115      0   0.0    995  99.5    988  98.8        -  SWANK::CALL-WITH-BINDINGS
+ 116      0   0.0    995  99.5    988  98.8        -  SWANK::HANDLE-REQUESTS
+ 117      0   0.0    995  99.5    988  98.8        -  (FLET SB-UNIX::BODY :IN SB-THREAD::NEW-LISP-THREAD-TRAMPOLINE)
+ 118      0   0.0    995  99.5    988  98.8        -  (FLET "WITHOUT-INTERRUPTS-BODY-4" :IN SB-THREAD::NEW-LISP-THREAD-TRAMPOLINE)
+ 119      0   0.0    995  99.5    988  98.8        -  (FLET SB-THREAD::WITH-MUTEX-THUNK :IN SB-THREAD::NEW-LISP-THREAD-TRAMPOLINE)
+ 120      0   0.0    995  99.5    988  98.8        -  (FLET "WITHOUT-INTERRUPTS-BODY-1" :IN SB-THREAD::CALL-WITH-MUTEX)
+ 121      0   0.0    995  99.5    988  98.8        -  SB-THREAD::CALL-WITH-MUTEX
+ 122      0   0.0    995  99.5    988  98.8        -  SB-THREAD::NEW-LISP-THREAD-TRAMPOLINE
+ 123      0   0.0    995  99.5    988  98.8        -  "foreign function call_into_lisp"
+ 124      0   0.0    995  99.5    988  98.8        -  "foreign function new_thread_trampoline"
+ 125      0   0.0     32   3.2    988  98.8        -  (FLET "CLEANUP-FUN-16" :IN LOX.INTERPRETER.DEF:EXECUTE-BLOCK)
+ 126      0   0.0      9   0.9    988  98.8        -  SB-KERNEL:%PUTHASH
+ 127      0   0.0      3   0.3    988  98.8        -  LOX.INTERPRETER::EVAL-TRUTHY-P
+ 128      0   0.0      2   0.2    988  98.8        -  "foreign function interrupt_handle_pending"
+ 129      0   0.0      2   0.2    988  98.8        -  "foreign function handle_trap"
+ 130      0   0.0      1   0.1    988  98.8        -  (SB-PCL::SLOT-TYPECHECK (OR NULL LOX.ENVIRONMENT:ENVIRONMENT))
+ 131      0   0.0      1   0.1    988  98.8        -  SB-KERNEL::MEMBER-TYPE-MEMBER-P
+------------------------------------------------------------------------
+
+
+** deterministic profiling
+
+measuring PROFILE overhead..done
+  seconds  |     gc     |     consed     |    calls    |  sec/call  |  name  
+------------------------------------------------------------------
+    32.879 |      0.000 |              0 | 104,512,464 |   0.000000 | LOX.INTERPRETER::LOOKUP-VARIABLE
+     6.395 |      0.062 |  1,162,823,904 |  29,860,705 |   0.000000 | LOX.CALLABLE:LOX-CALLABLE-ARITY
+     6.314 |      0.139 |  2,442,330,208 |  74,651,757 |   0.000000 | LOX.INTERPRETER::TYPE?
+     5.220 |      0.000 |              0 |  59,721,406 |   0.000000 | LOX.INTERPRETER::CHECK-NUMBER-OPERANDS
+     2.395 |      0.000 |              0 |  29,860,703 |   0.000000 | LOX.INTERPRETER::EVAL-TRUTHY-P
+     0.062 |      0.000 |              0 |  29,860,703 |   0.000000 | LOX.INTERPRETER::TRUTHY-P
+     0.001 |      0.000 |         65,520 |          35 |   0.000019 | LOX.RESOLVER:RESOLVE
+     0.000 |      0.000 |              0 |           2 |   0.000000 | LOX.INTERPRETER::STRINGIFY
+     0.000 |      0.000 |              0 |           4 |   0.000000 | LOX.INTERPRETER::INTERPRETER-RESOLVE
+     0.000 |      0.000 |              0 |           1 |   0.000000 | LOX.INTERPRETER:INTERPRET
+     0.000 |      0.000 |              0 |           7 |   0.000000 | LOX.RESOLVER::CURRENT-FUNCTION-TYPE-P
+     0.000 |      0.000 |              0 |           3 |   0.000000 | LOX.RESOLVER::CURRENT-FUNCTION
+     0.000 |      0.000 |              0 |           2 |   0.000000 | (SETF LOX.RESOLVER::CURRENT-FUNCTION)
+     0.000 |      0.000 |              0 |           1 |   0.000000 | LOX.RESOLVER::END-SCOPE
+     0.000 |      0.000 |              0 |          11 |   0.000000 | LOX.RESOLVER::RESOLVE-LOCAL
+     0.000 |      0.000 |              0 |           1 |   0.000000 | LOX.RESOLVER::RESOLVE-FUNCTION
+     0.000 |      0.000 |              0 |           2 |   0.000000 | LOX.RESOLVER::CLASS-TYPE-P
+     0.000 |      0.000 |              0 |           4 |   0.000000 | LOX.RESOLVER::DEFINE-IN-SCOPE
+     0.000 |      0.000 |              0 |          32 |   0.000000 | LOX.RESOLVER::SCOPES
+     0.000 |      0.000 |              0 |           2 |   0.000000 | (SETF LOX.RESOLVER::SCOPES)
+     0.000 |      0.000 |              0 |           1 |   0.000000 | LOX.RESOLVER::BEGIN-SCOPE
+     0.000 |      0.000 |              0 |           4 |   0.000000 | LOX.RESOLVER::DECLARE-IN-SCOPE
+     0.000 |      0.000 |              0 |           1 |   0.000000 | LOX.RESOLVER:MAKE-RESOLVER
+     0.000 |      3.899 | 53,488,425,552 |  29,860,705 |   0.000000 | LOX.CALLABLE:LOX-CALL
+     0.000 |      0.000 |              0 |           3 |   0.000000 | LOX.CALLABLE:MAKE-LOX-NATIVE-FUNCTION
+------------------------------------------------------------------
+    53.264 |      4.100 | 57,093,645,184 | 358,328,559 |            | Total
+
+estimated total profiling overhead: 542.51 seconds
+overhead estimation parameters:
+  1.2e-8s/call, 1.514e-6s total profiling, 7.58e-7s internal profiling
+
+  seconds  |     gc     |      consed     |    calls    |  sec/call  |  name  
+-------------------------------------------------------------------
+    25.226 |      0.224 |   4,211,843,952 | 108,507,320 |   0.000000 | LOX.CALLABLE:LOX-CALLABLE-ARITY
+     3.850 |      0.361 |   5,137,286,528 |   5,647,819 |   0.000001 | LOX.ENVIRONMENT:MAKE-ENVIRONMENT
+     3.399 |      0.000 |               0 |  14,119,530 |   0.000000 | LOX.ENVIRONMENT:GET-VALUE-AT
+     1.285 |      0.017 |     455,634,928 |  14,119,523 |   0.000000 | LOX.INTERPRETER::TYPE?
+     1.256 |      0.000 |               0 |  11,295,631 |   0.000000 | LOX.INTERPRETER::CHECK-NUMBER-OPERANDS
+     1.114 |      0.000 |               0 |   5,647,825 |   0.000000 | LOX.ENVIRONMENT:GET-VALUE
+     0.525 |      0.000 |               0 |   5,647,816 |   0.000000 | LOX.INTERPRETER::EVAL-TRUTHY-P
+     0.414 |      0.000 |               0 |   5,647,833 |   0.000000 | LOX.ENVIRONMENT:DEFINE
+     0.357 |      0.000 |               0 |  19,767,429 |   0.000000 | LOX.ENVIRONMENT:ENVIRONMENT
+     0.110 |      0.000 |               0 |   5,647,816 |   0.000000 | LOX.INTERPRETER::TRUTHY-P
+     0.087 |      0.000 |               0 |  14,119,529 |   0.000000 | LOX.ENVIRONMENT::ANCESTOR
+     0.001 |      0.000 |               0 |          12 |   0.000083 | LOX.INTERPRETER::INTERPRETER-RESOLVE
+     0.000 |      0.000 |               0 |           4 |   0.000000 | LOX.INTERPRETER::STRINGIFY
+     0.000 |      0.000 |               0 |          40 |   0.000000 | LOX.INTERPRETER::COUNT-ENCLOSED-ENVS
+     0.000 |      0.000 |       1,213,984 |  19,767,355 |   0.000000 | LOX.INTERPRETER::LOOKUP-VARIABLE
+     0.000 |      0.000 |              16 |           3 |   0.000000 | LOX.INTERPRETER:INTERPRET
+     0.000 |      0.000 |               0 |          35 |   0.000000 | LOX.RESOLVER::CURRENT-FUNCTION-TYPE-P
+     0.000 |      0.000 |               0 |          15 |   0.000000 | LOX.RESOLVER::CURRENT-FUNCTION
+     0.000 |      0.000 |               0 |          10 |   0.000000 | (SETF LOX.RESOLVER::CURRENT-FUNCTION)
+     0.000 |      0.000 |               0 |           5 |   0.000000 | LOX.RESOLVER::END-SCOPE
+     0.000 |      0.000 |               0 |          55 |   0.000000 | LOX.RESOLVER::RESOLVE-LOCAL
+     0.000 |      0.000 |               0 |           5 |   0.000000 | LOX.RESOLVER::RESOLVE-FUNCTION
+     0.000 |      0.000 |               0 |          10 |   0.000000 | LOX.RESOLVER::CLASS-TYPE-P
+     0.000 |      0.000 |               0 |          20 |   0.000000 | LOX.RESOLVER::DEFINE-IN-SCOPE
+     0.000 |      0.000 |               0 |         160 |   0.000000 | LOX.RESOLVER::SCOPES
+     0.000 |      0.000 |               0 |          10 |   0.000000 | (SETF LOX.RESOLVER::SCOPES)
+     0.000 |      0.000 |               0 |           5 |   0.000000 | LOX.RESOLVER::BEGIN-SCOPE
+     0.000 |      0.000 |               0 |          20 |   0.000000 | LOX.RESOLVER::DECLARE-IN-SCOPE
+     0.000 |      0.000 |               0 |           5 |   0.000000 | LOX.RESOLVER:MAKE-RESOLVER
+     0.000 |      0.000 |          98,288 |         175 |   0.000000 | LOX.RESOLVER:RESOLVE
+     0.000 |     12.879 | 189,254,213,920 | 108,507,320 |   0.000000 | LOX.CALLABLE:LOX-CALL
+     0.000 |      0.000 |               0 |          15 |   0.000000 | LOX.CALLABLE:MAKE-LOX-NATIVE-FUNCTION
+     0.000 |      0.000 |               0 |          52 |   0.000000 | LOX.ENVIRONMENT::ENCLOSING
+-------------------------------------------------------------------
+    37.626 |     13.481 | 199,060,291,616 | 338,443,402 |            | Total
+
+estimated total profiling overhead: 512.40 seconds
+overhead estimation parameters:
+  1.2e-8s/call, 1.514e-6s total profiling, 7.58e-7s internal profiling
+
+* with type? as macro (commit=)
+
+measuring PROFILE overhead..done
+  seconds  |     gc     |     consed    |    calls   |  sec/call  |  name  
+----------------------------------------------------------------
+     1.992 |      0.246 | 1,956,128,160 |  2,692,542 |   0.000001 | LOX.ENVIRONMENT:MAKE-ENVIRONMENT
+     1.468 |      0.000 |             0 |  6,731,344 |   0.000000 | LOX.ENVIRONMENT:GET-VALUE-AT
+     0.510 |      0.006 |    72,558,368 |  2,692,543 |   0.000000 | LOX.CALLABLE:LOX-CALLABLE-ARITY
+     0.508 |      0.000 |             0 |  2,692,545 |   0.000000 | LOX.ENVIRONMENT:GET-VALUE
+     0.333 |      0.000 |             0 |  2,692,537 |   0.000000 | LOX.INTERPRETER::EVAL-TRUTHY-P
+     0.312 |      0.000 |             0 |  2,692,555 |   0.000000 | LOX.ENVIRONMENT:DEFINE
+     0.028 |      0.000 |             0 |  2,692,537 |   0.000000 | LOX.INTERPRETER::TRUTHY-P
+     0.002 |      0.000 |       856,544 |        105 |   0.000019 | LOX.RESOLVER:RESOLVE
+     0.002 |      0.000 |     1,263,424 |          3 |   0.000663 | LOX.RESOLVER:MAKE-RESOLVER
+     0.001 |      0.000 |       849,920 |          9 |   0.000110 | LOX.CALLABLE:MAKE-LOX-NATIVE-FUNCTION
+     0.000 |      0.000 |             0 |          2 |   0.000000 | LOX.INTERPRETER::STRINGIFY
+     0.000 |      0.000 |     3,972,272 |  5,385,076 |   0.000000 | LOX.INTERPRETER::CHECK-NUMBER-OPERANDS
+     0.000 |      0.000 |             0 |         56 |   0.000000 | LOX.INTERPRETER::COUNT-ENCLOSED-ENVS
+     0.000 |      0.000 |             0 |  9,423,889 |   0.000000 | LOX.INTERPRETER::LOOKUP-VARIABLE
+     0.000 |      0.000 |             0 |         12 |   0.000000 | LOX.INTERPRETER::INTERPRETER-RESOLVE
+     0.000 |      0.000 |     8,081,648 |          3 |   0.000000 | LOX.INTERPRETER:INTERPRET
+     0.000 |      0.000 |             0 |  6,731,344 |   0.000000 | LOX.ENVIRONMENT::ANCESTOR
+     0.000 |      0.000 |             0 |         64 |   0.000000 | LOX.ENVIRONMENT::ENCLOSING
+     0.000 |      0.000 |             0 |  9,423,998 |   0.000000 | LOX.ENVIRONMENT:ENVIRONMENT
+     0.000 |      0.305 | 2,907,706,288 |  2,692,543 |   0.000000 | LOX.CALLABLE:LOX-CALL
+     0.000 |      0.000 |             0 |         21 |   0.000000 | LOX.RESOLVER::CURRENT-FUNCTION-TYPE-P
+     0.000 |      0.000 |             0 |          9 |   0.000000 | LOX.RESOLVER::CURRENT-FUNCTION
+     0.000 |      0.000 |             0 |          6 |   0.000000 | (SETF LOX.RESOLVER::CURRENT-FUNCTION)
+     0.000 |      0.000 |             0 |          3 |   0.000000 | LOX.RESOLVER::END-SCOPE
+     0.000 |      0.000 |             0 |         33 |   0.000000 | LOX.RESOLVER::RESOLVE-LOCAL
+     0.000 |      0.000 |             0 |          3 |   0.000000 | LOX.RESOLVER::RESOLVE-FUNCTION
+     0.000 |      0.000 |             0 |          6 |   0.000000 | LOX.RESOLVER::CLASS-TYPE-P
+     0.000 |      0.000 |             0 |         12 |   0.000000 | LOX.RESOLVER::DEFINE-IN-SCOPE
+     0.000 |      0.000 |             0 |         96 |   0.000000 | LOX.RESOLVER::SCOPES
+     0.000 |      0.000 |             0 |          6 |   0.000000 | (SETF LOX.RESOLVER::SCOPES)
+     0.000 |      0.000 |        25,472 |          3 |   0.000000 | LOX.RESOLVER::BEGIN-SCOPE
+     0.000 |      0.000 |             0 |         12 |   0.000000 | LOX.RESOLVER::DECLARE-IN-SCOPE
+----------------------------------------------------------------
+     5.154 |      0.557 | 4,951,442,096 | 56,543,917 |            | Total
+
+
+

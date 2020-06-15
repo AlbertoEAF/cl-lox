@@ -56,9 +56,11 @@ Compared to the book:
 (defun eval-truthy-p (expr)
   (eq :true (truthy-p expr)))
 
-(defun type? (type-specifier &rest vars)
+(defmacro type? (type-specifier &rest vars)
   "Ensure all vars are of type type-specifier."
-  (loop for var in vars always (typep var type-specifier)))
+  (let ((tests (mapcar (lambda (var) (list 'typep var type-specifier))
+                       vars)))
+    `(and ,@tests)))
 
 (defun lox-null (x)
   (eql x :null))
@@ -278,7 +280,7 @@ Compared to the book:
                          environment)))
       (when superclass
           (env:define class-env "super" superclass))
-    
+
       (let ((methods (make-hash-table :test #'equal)))
         (dolist (method @stmt.methods)
           (setf (gethash @method.name.lexeme methods)
