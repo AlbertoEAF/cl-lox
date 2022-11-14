@@ -1,0 +1,81 @@
+digraph g{
+
+
+# interpreter-def package
+
+subgraph cluster_syntax {
+label = ":syntax"
+stmt [shape="box"]
+expr [shape="box"]
+}
+
+subgraph cluster_0 {
+label = "package interpreter.def"
+
+interpreter [ shape="box"];
+
+evaluate -> interpreter
+evaluate -> expr
+
+execute -> interpreter
+execute -> stmt
+
+"execute-block" -> interpreter
+"execute-block" -> execute
+}
+
+subgraph cluster_1 {
+label = "package callable"
+
+callable [shape="box"]
+
+call -> interpreter
+call -> callable
+
+callable_arity -> callable
+
+
+
+native_fn -> callable
+
+}
+
+subgraph cluster_2 {
+label = ":lox.interpreter"
+
+native_fn [shape="box"]
+
+"make-interpreter" -> native_fn [shape="box"]
+"make-interpreter" -> interpreter
+
+"make-proxy-env-interpreter" -> "make-interpreter"
+
+"defmethod execute" -> execute
+"defmethod execute" -> interpreter
+"defmethod execute" -> "make-lox-function"
+
+"defmethod evaluate" -> evaluate
+"defmethod evaluate" -> interpreter
+
+}
+
+subgraph cluster_3 {
+label = "package :lox.function
+
+function [shape="box"]
+
+function -> callable
+
+"make-lox-function" -> function
+
+"function:call" -> interpreter
+"function:call" -> function
+"function:call" -> "execute-block"
+"function:call" -> "make-proxy-env-interpreter"
+}
+
+
+
+
+
+}
